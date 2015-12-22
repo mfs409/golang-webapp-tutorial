@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8">
+  <title>Golang Webapp Tutorial</title>
+  <meta name="description" content="">
+  <meta name="author" content="Mike Spear">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+  <link rel="stylesheet" href="css/reveal.css">
+  <link rel="stylesheet" href="css/beige-mfs.css" id="theme">
+  <link rel="stylesheet" href="css/zenburn.css">
+
+  <script>
+// for printing and pdf exports
+var link = document.createElement('link');
+link.rel = 'stylesheet';
+link.type = 'text/css';
+link.href = window.location.search.match(/print-pdf/gi) ? 'css/pdf.css' : '';
+document.getElementsByTagName('head')[0].appendChild(link);
+  </script>
+
+  <style>
+/*
+ * Within the lesson, these are our code blocks.  They auto-scroll.
+ */
+#content code {
+    max-height: 20em;
+    overflow: auto;
+}
+  </style>
+
+ </head>
+ <body>
+  <div class="reveal">
+   <div class="slides">
+    <section>
+     <h1>Golang Webapp Tutorial</h1>
+     <h3>Mike Spear</h3>
+     <h5>
+      <a href="http://profspear.blogspot.com" target="_blank">blog</a>
+      ~ <a href='mailto:mfs409@gmail.com'>email</a>
+      <br />
+      <a href='?print-pdf#/'>print mode</a>
+      ~ <a href='?noprint#'>display mode</a>
+     </h5>
+     <aside class="notes">
+      Notes go here
+     </aside>
+    </section>
+
+    <section>
+     <h3>Overview</h3>
+     <section>
+      <p>
+       This tutorial will describe the steps for making a web app that
+       employs the following technologies:
+      </p>
+      <ul>
+       <li>The Go programming language</li>
+       <li>MySQL</li>
+       <li>Memcached</li>
+       <li>OAuth 2.0 (via Google)</li>
+       <li>Bootstrap</li>
+      </ul>
+      <p>
+       By the time we're done, you should have a fully-functional (though not
+       particularly useful) web app that you can customize.
+      </p>
+     </section>
+    </section>
+
+    <section>
+     <h3>Why This Tutorial?</h3>
+     <section>
+      <p>
+       I've written tutorials for much of this before, using a MEAN stack.
+       Why do it again?
+      </p>
+      <ul>
+       <li>For small apps, it's easier to deal with relational data (MySQL) than NoSQL data (MongoDB)</li>
+       <li>Go is much faster than JavaScript</li>
+       <li>User management is harder than Passport.js makes it seem</li>
+      </ul>
+      <p>
+       Furthermore, the old tutorials never quite <em>finished</em>.  This
+       time around, the tutorial won't stop until everything is integrated
+       and working together.
+      </p>
+     </section>
+    </section>
+    
+    <section>
+     <h1>Part #1: Getting Started</h1>
+     <p>
+      To start, let's set up folders, environments and a few simple Go
+      programs.
+     </p>
+    </section>
+    
+    <section>
+     <h2>Requirements</h2>
+     <section>
+      <ul>
+       <li>Bash shell</li>
+       <ul><li>(I use Git Bash for Windows)</li></ul>
+       <li>Golang compiler</li>
+       <li>MySQL and Memcached</li>
+       <ul>
+        <li>Local installation is fine for now</li>
+       </ul>
+       <li>A Google Developer Console account</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h2>Environment</h2>
+     <section>
+      <ul>
+       <li>
+       The <tt>setenv.sh</tt> script configures your environment for building
+       in Go.  Load it like this:
+       </li>
+      <pre>source ~/setenv.sh</pre>
+      <li>
+       All of your Go code will go in subfolders of <tt>src/</tt>
+      </li>
+      </ul>
+      <p class='nb'>
+       This may seem strange if you're coming from C++, or even from node.js.
+       In Go, sometimes you don't get a choice in how you do things, and Go
+       users will insist that the (seemingly arbitrary) option that has
+       become canon is somehow objectively "best".
+      </p>
+     </section>
+    </section>
+
+    <section>
+     <h2>Applications</h2>
+     <section>
+      <ul>
+      <li>We will make three applications:</li>
+      <ul>
+       <li>webapp: the main web application</li>
+       <li>admin: a swiss army knife of admin tools for our app</li>
+       <li>statichttpserver: a debugging tool for testing html5 code</li>
+      </ul>
+      </ul>
+      <p class='nb'>
+       This layout is, in part, an attempt to
+       follow <a href='http://12factor.net/'>12-factor design</a>.
+       Specifically, we want all admin work to be housed outside of the
+       folder for the program we'll deploy.
+      </p>
+     </section>
+    </section>
+
+    <section>
+     <h2>App #1: statichttpserver</h2>
+     <section>
+      <ul><li>Put this in <tt>src/statichttpserver/main.go</tt></li></ul>
+      <pre><code class="go" style="max-height: 20em" source="include/statichttpserver.go"></code></pre>
+     </section>
+     <section>
+      <p>Build like this:</p>
+      <pre>go build statichttpserver</pre>
+      <p>Run like this:</p>
+      <pre>./statichttpserver.exe -h</pre>
+      <p>Or, better:</p>
+      <pre>./statichttpserver.exe -p 8080 -f ./tutorial</pre>
+      <p class="nb">
+       (After the third command,
+       <a href='http://localhost:8080/index.html' target='_blank'>this link</a>
+       should be live. Use ctrl-c from your shell to stop the server.)
+      </p>
+     </section>
+    </section>
+
+    <section>
+     <h2>App #2: admin</h2>
+     <section>
+      <ul><li>For now, we'll just make a shell for our admin tasks:</li></ul>
+      <pre><code class="go" style="max-height: 20em" source="include/admin_001.go"></code></pre>
+     </section>
+     <section>
+      <p>Build like this:</p>
+      <pre>go build admin</pre>
+      <p>Run like this:</p>
+      <pre>./admin.exe</pre>
+     </section>
+    </section>
+
+    <section>
+     <h1>Part #2: Setting Up All The Code</h1>
+     <p>
+      This is going to get very busy, very quickly.  We'll list all the
+      code that you need to write, and where to put it.  Nothing will work
+      yet, of course.
+     </p>
+    </section>
+
+    <section>
+     <h1>Part #3: Database Admin Tasks</h1>
+     <p>
+      We'll update admin/main.go to create our tables and support one-off
+      queries.
+     </p>
+    </section>
+
+    <section>
+     <h1>Part #4: Authentication</h1>
+     <p>
+      Now it's time to set up OAuth with Google.
+     </p>
+    </section>
+
+    <section>
+     <h1>Part #5: Routing Requests</h1>
+     <p>
+      Let's look at how the different HTML requests get served.
+     </p>
+    </section>
+
+    <section>
+     <h1>Part #6: Database CRUD / HTML REST</h1>
+     <p>
+      Next, we discuss how to interact with the database.
+     </p>
+    </section>
+
+    <section>
+     <h1>Part #7: Front End and Templates</h1>
+     <p>
+      Without a front-end, the whole exercise is for naught!
+     </p>
+    </section>
+
+    <section>
+     <h1>Part #8: Wrap-Up</h1>
+     <p>
+      We'll review what we did, and where to go from here.
+     </p>
+    </section>
+    
+   </div>
+  </div>
+
+  <script src="js/head.min.js"></script>
+  <script src="js/jquery-2.1.1.min.js"></script>
+  <script src="js/reveal.js"></script>
+  
+  <script>
+// see https://github.com/hakimel/reveal.js#configuration
+Reveal.initialize({
+    controls: true,
+    progress: true,
+    history: true,
+    center: false,
+    slideNumber: true,
+    width: 960,
+    height: 640,
+    transition: 'none',
+    dependencies: [
+        { src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+        { src: 'plugin/notes/notes.js', async: true },
+        { src: 'plugin/svg-js/svg.min.js', async: true },
+        { src: 'plugin/zoom-js/zoom.js', async: true }
+    ]
+});
+
+  </script>
+  <script src="js/loadcode.js"></script>
+ </body>
+</html>
