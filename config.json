@@ -1,0 +1,15 @@
+{
+    "OauthGoogleClientId"     : "",
+    "OauthGoogleClientSecret" : "",
+    "OauthGoogleScopes"       : [""],
+    "OauthGoogleRedirectUrl"  : "",
+
+    "MysqlUsername" : "",
+    "MysqlPassword" : "",
+    "MysqlHost"     : "",
+    "MysqlPort"     : "",
+    "MysqlDbname"   : "",
+
+    "MemcachedHost" : "",
+    "MemcachedPort" : ""
+}

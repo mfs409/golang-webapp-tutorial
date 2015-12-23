@@ -194,7 +194,130 @@ document.getElementsByTagName('head')[0].appendChild(link);
     </section>
 
     <section>
-     <h1>Part #2: Setting Up All The Code</h1>
+     <h1>Part #2: Non-Code Configuration</h1>
+     <p>
+      In this part, we'll set up our database and OAuth information, so that
+      the rest of the tutorial works more cleanly.
+     </p>
+    </section>
+
+    <section>
+     <h3>Database Configuration</h3>
+     <section>
+      <ul>
+       <li>
+        You should have MySQL set up, with some kind of account and password
+        information
+       </li>
+       <li>We're going to build everything programatically, without the
+       GUI, so the <tt>admin</tt> program needs to know about the database</li>
+       <li>Copy <tt>config.json</tt> to some other file (perhaps <tt>webapp_config.json</tt>?) and <em>add it to
+       your <tt>.gitignore</tt></em></li>
+       <ul>
+        <li>You do <strong>NOT</strong> want to put your config information
+        into a repository that might become public.</li>
+       </ul>
+      </ul>
+     </section>
+    </section>
+    
+    <section>
+     <h3>Database Configuration</h3>
+     <section>
+      <ul>
+       <li>In your <em>copy of <tt>config.json</tt></em>, set the five
+       fields that start with 'Mysql':</li>
+      </ul>
+       <pre><code class="json" style="max-height: 20em">{
+    ...
+    "MysqlUsername" : "bob",
+    "MysqlPassword" : "bob_has_@_$up3r_$tr0NG_P@sSW0rd",
+    "MysqlHost"     : "127.0.0.1",
+    "MysqlPort"     : "3306",
+    "MysqlDbname"   : "webapp",
+    ...
+}</code></pre>
+       <ul>
+        <li>Note: you can choose a better name for your database than 'webapp'!</li>
+       </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>Database Configuration</h3>
+     <section>
+      <ul>
+       <li>Get the Go drivers for MySQL:</li>
+       </ul>
+      <pre>go get github.com/go-sql-driver/mysql</pre>
+      <ul>
+       <li>The code we need can be found in <tt>admin.go</tt>:</li>
+      </ul>
+      <pre><code class="go" style="max-height: 20em">// Configuration information for Google OAuth, MySQL, and Memcached.  We
+// parse this from a JSON config file
+//
+// NB: field names must start with Capital letter for JSON parse to work
+type Config struct {
+	ClientId string `json:"OauthGoogleClientId"`
+	ClientSecret string `json:"OauthGoogleClientSecret"`
+	Scopes []string `json:"OauthGoogleScopes"`
+	RedirectUrl string `json:"OauthGoogleRedirectUrl"`
+	DbUser string `json:"MysqlUsername"`
+	DbPass string `json:"MysqlPassword"`
+	DbHost string `json:"MysqlHost"`
+	DbPort string `json:"MysqlPort"`
+	DbName string `json:"MysqlDbname"`
+	McdHost string `json:"MemcachedHost"`
+	McdPort string `json:"MemcachedPort"`
+}
+
+// The configuration information for the app we're administering
+var cfg Config
+
+// Load a JSON file that has all the config information for our app
+func loadConfig(cfgFileName string) {
+	f, err := os.Open(cfgFileName)
+	if err != nil { panic(err) }
+	defer f.Close()
+	jsonParser := json.NewDecoder(f)
+	if err = jsonParser.Decode(&cfg); err != nil { panic(err) }
+}
+
+// Create the schema that will be used by our program
+func createSchema() {
+	// NB: trailing '/' is necessary
+	db, err := sql.Open("mysql", cfg.DbUser+":"+cfg.DbPass+"@("+cfg.DbHost+":"+cfg.DbPort+")/")
+	if err != nil { log.Fatal(err) }
+	_, err = db.Exec("CREATE DATABASE `"+cfg.DbName+"`;")
+	if err != nil { log.Fatal(err) }
+}</code></pre>
+     </section>
+    </section>
+
+    <section>
+     <h3>Google OAuth 2.0 Configuration</h3>
+     <section>
+      <ul>
+       <li>Head to the <a href="https://console.developers.google.com/project"
+       target='_blank'>Google Developer Console</a></li>
+       <li>Create a new project... I called mine 'GolangWebappTutorial'</li>
+       <li>Enable the Google+ API and create an OAuth 2.0 Client ID</li>
+       <li>For now, add a redirect uri of
+       http://localhost:8080/auth/google/callback in the console, and in
+       your JSON config file</li>
+       <ul>
+        <li>This address will change after we get the whole app up and running</li>
+        </ul>
+       <li>Copy your Client ID and Client Secret into your JSON config
+       file</li>
+       <li>In the JSON config file, add "https://www.googleapis.com/auth/userinfo.email"
+       as a scope.
+      </ul>
+     </section>
+    </section>
+    
+    <section>
+     <h1>Part #X: Setting Up All The Code</h1>
      <p>
       This is going to get very busy, very quickly.  We'll list all the
       code that you need to write, and where to put it.  Nothing will work
@@ -203,7 +326,7 @@ document.getElementsByTagName('head')[0].appendChild(link);
     </section>
 
     <section>
-     <h1>Part #3: Database Admin Tasks</h1>
+     <h1>Part #X: Database Admin Tasks</h1>
      <p>
       We'll update admin/main.go to create our tables and support one-off
       queries.
@@ -211,35 +334,35 @@ document.getElementsByTagName('head')[0].appendChild(link);
     </section>
 
     <section>
-     <h1>Part #4: Authentication</h1>
+     <h1>Part #X: Authentication</h1>
      <p>
       Now it's time to set up OAuth with Google.
      </p>
     </section>
 
     <section>
-     <h1>Part #5: Routing Requests</h1>
+     <h1>Part #X: Routing Requests</h1>
      <p>
       Let's look at how the different HTML requests get served.
      </p>
     </section>
 
     <section>
-     <h1>Part #6: Database CRUD / HTML REST</h1>
+     <h1>Part #X: Database CRUD / HTML REST</h1>
      <p>
       Next, we discuss how to interact with the database.
      </p>
     </section>
 
     <section>
-     <h1>Part #7: Front End and Templates</h1>
+     <h1>Part #X: Front End and Templates</h1>
      <p>
       Without a front-end, the whole exercise is for naught!
      </p>
     </section>
 
     <section>
-     <h1>Part #8: Wrap-Up</h1>
+     <h1>Part #X: Wrap-Up</h1>
      <p>
       We'll review what we did, and where to go from here.
      </p>
