@@ -9,4 +9,8 @@ single table, and uses Bootstrap for a clean UI.
 
 setenv.sh -- Configure the build environment by setting the GOPATH
 
+config.json -- An example config file
+
 src/statichttpserver -- A simple static web server, useful for testing HTML code that requires a server
+
+src/admin -- A program for performing basic administrative tasks on the database
