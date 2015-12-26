@@ -1,5 +1,4 @@
-// Functions and objects that are used in order to authenticate the user,
-// along with routes related to authentication
+// Functions and objects that are used in order to authenticate the user
 package main
 
 import ("net/http"; "crypto/rand"; "encoding/base64"; "io"; "time"; "log";
