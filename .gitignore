@@ -1,3 +1,4 @@
 *.exe
 src/github.com/*
 webapp_config.json
+pkg/*

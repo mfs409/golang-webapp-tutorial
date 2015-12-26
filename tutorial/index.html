@@ -418,11 +418,51 @@ $(document).ready(function(){
      <section>
       <ul>
        <li>Our program has the following folder structure:</li>
-       <ul>
-        
-       </ul>
+       <dl>
+        <dt><tt>private/</tt> and <tt>public/</tt></dt><dd>Static web content</dd>
+        <dt><tt>templates/</tt></dt><dd>Templates for generating HTML pages</dd>
+        <dt><tt>src/admin/</tt></dt><dd>The code for our app's admin program</dd>
+        <dt><tt>src/webapp/</tt></dt><dd>The code for our main web app</dd>
+       </dl>
+       <li>Note: in the repository, <tt>tutorial/</tt>
+       and <tt>src/statichttpserver</tt> support this tutorial</li>
+       <li>Note: the <tt>pkg/</tt> and other <tt>src/*</tt> folders are
+       managed by Go</li>
       </ul>
      </section>
+    </section>
+
+    <section>
+     <h3>Source Code: <tt>src/admin/main.go</tt></h3>
+     <section>
+      <ul>
+       <li>All administrative code lives in a single file</li>
+      </ul>
+      <pre><code class="go" style="max-height: 20em" source="include/admin_final.go"></code></pre>
+     </section>
+     <section>
+      <ul>
+       <li>To build and run:</li>
+      </ul>
+      <pre>go get github.com/go-sql-driver/mysql
+go build admin
+./admin.exe -h</pre>
+      <ul>
+       <li>Note: there are quite a few more options now!</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>Source Code: <tt>src/admin/???.go</tt></h3>
+     <section>
+
+     </section>
+    </section>
+
+    <section>
+     <pre>go get golang.org/x/oauth2
+go get golang.org/x/oauth2/google</pre>
     </section>
     
     <section>

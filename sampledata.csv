@@ -1,0 +1,4 @@
+"Short text","Long text, or at least text that could be long.",7,-2.6,6
+"More text","Let's just have short text, so this doesn't get too crazy",-8,99.3,-42
+"No third option","This example will trigger the ""null"" 5th field",-8,63.9,""
+"Comprehensiveness","We should take care to ensure that negatives, positives, decimals, nulls, and special text (like quotation marks) all work",22,9.4,-22.9
