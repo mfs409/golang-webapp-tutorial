@@ -31,6 +31,7 @@ type Config struct {
 	DbName       string   `json:"MysqlDbname"`
 	McdHost      string   `json:"MemcachedHost"`
 	McdPort      string   `json:"MemcachedPort"`
+	AppPort      string   `json:"AppPort"`
 }
 
 // The configuration information for the app we're administering

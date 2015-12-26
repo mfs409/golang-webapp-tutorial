@@ -1,15 +1,17 @@
 {
     "OauthGoogleClientId"     : "",
     "OauthGoogleClientSecret" : "",
-    "OauthGoogleScopes"       : [""],
-    "OauthGoogleRedirectUrl"  : "",
+    "OauthGoogleScopes"       : ["https://www.googleapis.com/auth/userinfo.email"],
+    "OauthGoogleRedirectUrl"  : "http://localhost:8080/auth/google/callback",
 
     "MysqlUsername" : "",
     "MysqlPassword" : "",
     "MysqlHost"     : "",
-    "MysqlPort"     : "",
+    "MysqlPort"     : "3306",
     "MysqlDbname"   : "",
 
     "MemcachedHost" : "",
-    "MemcachedPort" : ""
+    "MemcachedPort" : "11211",
+
+    "AppPort" : "8080"
 }

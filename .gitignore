@@ -1,4 +1,6 @@
 *.exe
-src/github.com/*
 webapp_config.json
 pkg/*
+src/golang.org/*
+src/google.golang.org/*
+src/github.com/*
