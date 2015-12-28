@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="css/beige-mfs.css" id="theme">
   <link rel="stylesheet" href="css/zenburn.css">
 
+  <script src="js/jquery-2.1.1.min.js"></script>
+
   <script>
 // for printing and pdf exports
 var link = document.createElement('link');
@@ -31,12 +33,6 @@ document.getElementsByTagName('head')[0].appendChild(link);
     overflow: auto;
 }
   </style>
-
-  <script src="js/head.min.js"></script>
-  <script src="js/jquery-2.1.1.min.js"></script>
-  <script src="js/reveal.js"></script>
-  <script src="plugin/svg-js/svg.min.js"></script>
-
  </head>
  <body>
   <div class="reveal">
@@ -96,6 +92,168 @@ document.getElementsByTagName('head')[0].appendChild(link);
       </p>
      </section>
     </section>
+
+    <section>
+     <h1>Part #0: The Big Picture</h1>
+     <p>
+      What are all of the pieces, and how do they fit together?
+     </p>
+    </section>
+
+    <section>
+     <h3>Components</h3>
+     <section>
+      <ul>
+       <li>Our app has three types of components:</li>
+      </ul>
+      <div id="bigpicture" style="position: relative; float:left"></div>
+  <script>
+$(document).ready(function(){
+    var ctx = SVG('bigpicture').size(800, 740)
+    // database blob
+    ctx.rect(180, 140).attr({ fill: '#fff', stroke: '#000' }).radius(10)
+    ctx.text('Database').move(10, 0)
+    ctx.line(0, 39, 180, 39).stroke({ width: 2, color: '#000' })
+    ctx.text('Store all data: user\naccount info, and anything\nevery entered by a user.\nUses MySQL.').move(10, 40).font({size: 14})
+
+    // app server blob
+    ctx.rect(210, 200).attr({ fill: '#fff', stroke: '#000' }).radius(10).move(240, 0)
+    ctx.text('App Server').move(250, 0)
+    ctx.line(240, 39, 450, 39).stroke({ width: 2, color: '#000' })
+    ctx.text('Mediate all interaction between\nfront end(s) and database.\nHandle all login, logout, and\nregistration actions.\nEnsure all accesses are made\nby logged-in users.\nServe content to web front-end.\nWritten in Go.').move(250, 40).font({size: 14})
+
+    // web front-end blob
+    ctx.rect(270, 110).attr({ fill: '#fff', stroke: '#000' }).radius(10).move(510, 0)
+    ctx.text('Web Front-End').move(520, 0)
+    ctx.line(510, 39, 780, 39).stroke({ width: 2, color: '#000' })
+    ctx.text('Responsive website.\n HTML5+JavaScript.').move(520, 40).font({size: 14})
+
+    // mobile blob
+    ctx.rect(270, 110).attr({ fill: '#fff', stroke: '#000' }).radius(10).move(510, 130)
+    ctx.text('Mobile App(s)').move(520, 130)
+    ctx.line(510, 169, 780, 169).stroke({ width: 2, color: '#000' })
+    ctx.text('iOS and Android versions.\nUse Cordova for now.').move(520, 170).font({size: 14})
+
+    // admin blob
+    ctx.rect(270, 120).attr({ fill: '#fff', stroke: '#000' }).radius(10).move(510, 260)
+    ctx.text('Admin App').move(520, 260)
+    ctx.line(510, 299, 780, 299).stroke({ width: 2, color: '#000' })
+    ctx.text('Perform administrative tasks\nCommand-line (for now).\nRequires machine-level access.').move(520, 300).font({size: 14})
+    
+    var backMark = ctx.marker(10, 10, function(add) {
+        add.polygon('2,2.5 2,7.5 8,5').transform({rotation:180})
+        this.fill('#000')
+    })
+    var frontMark = ctx.marker(10, 10, function(add) {
+        add.polygon('2,2.5 2,7.5 8,5')
+        this.fill('#000')
+    })
+
+    ctx.line(180, 50, 240, 50).stroke({width:2, color:'#000'}).marker('start', backMark).marker('end', frontMark)
+    ctx.line(450, 50, 510, 50).stroke({width:2, color:'#000'}).marker('start', backMark).marker('end', frontMark)
+    ctx.line(450, 60, 510, 180).stroke({width:2, color:'#000'}).marker('start', backMark).marker('end', frontMark)
+    ctx.line(450, 70, 510, 320).stroke({width:2, color:'#000'}).marker('start', backMark).marker('end', frontMark)
+});
+  </script>
+     </section>
+    </section>
+
+    <section>
+     <h3>Components: Why</h3>
+     <section>
+      <ul>
+       <li>Different tasks are best satisfied using different languages</li>
+       <li>Separation of functionality enables multiple front-ends</li>
+       <li>Easier to test and upgrade each part</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>The Database</h3>
+     <section>
+      <ul>
+       <li>Store all data entered by users in a way that is <em>never lost</em></li>
+       <li>Data is organized as <strong>tables</strong></li>
+       <li>Each <strong>row</strong> is like an object,
+       each <strong>column</strong> is like a field</li>
+       <li>Relationships between tables (i.e., a row
+       in <strong>users</strong> table can relate to many rows
+       in <strong>comments</strong> table)</li>
+       <li>We use MySQL in this tutorial</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>The App Server</h3>
+     <section>
+      <ul>
+       <li>Manages authentication via Google+ OAuth 2.0</li>
+       <li>Creates "REST" routes to the database</li>
+       <ul>
+        <li>
+         Use
+         HTTP <strong>POST</strong>, <strong>GET</strong>, <strong>PUT</strong>,
+         and <strong>DELETE</strong> verbs to
+         <strong>CREATE</strong>, <strong>READ</strong>, <strong>UPDATE</strong>,
+         and <strong>DELETE</strong> data
+        </li>
+        <li>Note: we don't adhere to a 100% strict RESTful interface</li>
+       </ul>
+       <li>Prevents app users from needing accounts to the database</li>
+       <li>Allows custom logic that's hard to achieve in MySQL</li>
+       <li>Written in Go, but could be in any language</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>The Web App</h3>
+     <section>
+      <ul>
+       <li>HTML5 and JavaScript code that enables any browser to interact
+       with the database, mediated by the App Server</li>
+       <ul>
+        <li>We're lazy: the App Server is also the web server for the Web App</li>
+       </ul>
+       <li>Design goal: all logic is in JavaScript and HTML that is executed
+       on the client</li>
+       <ul>
+        <li>We don't want the App Server to do anything special for the Web
+        App, vs. Mobile Apps</li>
+        <li>Ultimately, this goal will make mobile development easier </li>
+       </ul>
+       <li>We use bootstrap for all styling in this tutorial... it gives us
+       an app that looks good on mobile and desktop devices</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>The Mobile App</h3>
+     <section>
+      <ul>
+       <li>Android and iOS versions</li>
+       <li>Use Cordova: HTML+JavaScript to produce "app"</li>
+       <li>Use CSS to make it look like a native app</li>
+       <li>No need to re-implement app server's logic</li>
+       <li>Note: we aren't going to cover this in the tutorial</li>
+      </ul>
+     </section>
+    </section>
+
+    <section>
+     <h3>The Admin App</h3>
+     <section>
+      <ul>
+       <li>Activate user registrations</li>
+       <li>Reset the database's tables</li>
+       <li>Easy to add "one-off" queries</li>
+       <li>Only accessible from developer machines!</li>
+      </ul>
+     </section>
+    </section>
     
     <section>
      <h1>Part #1: Getting Started</h1>
@@ -136,9 +294,8 @@ document.getElementsByTagName('head')[0].appendChild(link);
       </ul>
       <p class='nb'>
        This may seem strange if you're coming from C++, or even from node.js.
-       In Go, sometimes you don't get a choice in how you do things, and Go
-       users will insist that the (seemingly arbitrary) option that has
-       become canon is somehow objectively "best".
+       For better or for worse, in Go, sometimes you don't get a choice in
+       how you do things.
       </p>
      </section>
     </section>
@@ -519,6 +676,12 @@ go get golang.org/x/oauth2/google</pre>
    </div>
   </div>
 
+  <script src="js/head.min.js"></script>
+  <script src="js/reveal.js"></script>
+  <script src="plugin/svg-js/svg.min.js"></script>
+  <script src="plugin/zoom-js/zoom.js"></script>
+  <script src="plugin/highlight/highlight.js"></script>
+  <script src="js/loadcode.js"></script>
   <script>
 // see https://github.com/hakimel/reveal.js#configuration
 Reveal.initialize({
@@ -531,13 +694,9 @@ Reveal.initialize({
     height: 640,
     transition: 'none',
     dependencies: [
-        { src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
-        { src: 'plugin/notes/notes.js', async: true },
-        { src: 'plugin/zoom-js/zoom.js', async: true }
+        { src: 'plugin/notes/notes.js', async: true}
     ]
 });
-
   </script>
-  <script src="js/loadcode.js"></script>
  </body>
 </html>
