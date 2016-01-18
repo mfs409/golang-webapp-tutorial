@@ -1,7 +1,13 @@
 // Routes related to REST paths for accessing the DATA table
 package main
 
-import ("net/http"; "log"; "strconv"; "encoding/json"; "io/ioutil")
+import (
+	"encoding/json"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"strconv"
+)
 
 // a helper function to send HTTP 403 / Forbidden when the user is not logged
 // in
@@ -25,19 +31,25 @@ func jResp(w http.ResponseWriter, data interface{}) {
 func handleGetAllData(w http.ResponseWriter, r *http.Request) {
 	// if authentication passes, use getAllRows to get a big JSON blob to
 	// send back
-	if !checkLogin(r) { do403(w, r); return }
+	if !checkLogin(r) {
+		do403(w, r)
+		return
+	}
 	w.Write([]byte(getAllRows()))
 }
 
 // The PUT route for updating a row of DATA
 func handlePutData(w http.ResponseWriter, r *http.Request) {
 	// check authentication
-	if !checkLogin(r) { do403(w, r); return }
+	if !checkLogin(r) {
+		do403(w, r)
+		return
+	}
 
 	// get the ID from the querystring
 	id, err := strconv.Atoi(r.URL.Path[6:])
 	if err != nil {
-		jResp(w, "invalid id: " + r.URL.Path + " " + r.URL.Path[6:])
+		jResp(w, "invalid id: "+r.URL.Path+" "+r.URL.Path[6:])
 		return
 	}
 
@@ -61,18 +73,25 @@ func handlePutData(w http.ResponseWriter, r *http.Request) {
 
 	// send the new data to the database
 	ok := updateDataRow(id, m)
-	if ok { jResp(w, "{res: 'ok'}") } else { jResp(w, "{res: 'error'}") }
+	if ok {
+		jResp(w, "{res: 'ok'}")
+	} else {
+		jResp(w, "{res: 'error'}")
+	}
 }
 
 // The GET route for viewing one row of DATA
 func handleGetDataOne(w http.ResponseWriter, r *http.Request) {
 	// check authentication
-	if !checkLogin(r) { do403(w, r); return }
+	if !checkLogin(r) {
+		do403(w, r)
+		return
+	}
 
 	// get the ID from the querystring
 	id, err := strconv.Atoi(r.URL.Path[6:])
 	if err != nil {
-		jResp(w, "invalid id: " + r.URL.Path + " " + r.URL.Path[6:])
+		jResp(w, "invalid id: "+r.URL.Path+" "+r.URL.Path[6:])
 		return
 	}
 
@@ -83,23 +102,33 @@ func handleGetDataOne(w http.ResponseWriter, r *http.Request) {
 // The DELETE route for removing one row of DATA
 func handleDeleteData(w http.ResponseWriter, r *http.Request) {
 	// authenticate, then get ID from querystring
-	if !checkLogin(r) { do403(w, r); return }
+	if !checkLogin(r) {
+		do403(w, r)
+		return
+	}
 
 	id, err := strconv.Atoi(r.URL.Path[6:])
 	if err != nil {
-		jResp(w, "invalid id: " + r.URL.Path + " " + r.URL.Path[6:])
+		jResp(w, "invalid id: "+r.URL.Path+" "+r.URL.Path[6:])
 		return
 	}
 
 	// delete the row
 	ok := deleteDataRow(id)
-	if ok { jResp(w, "{res: 'ok'}") } else { jResp(w, "{res: 'error'}") }
+	if ok {
+		jResp(w, "{res: 'ok'}")
+	} else {
+		jResp(w, "{res: 'error'}")
+	}
 }
 
 // The POST route for adding a new row of DATA
 func handlePostData(w http.ResponseWriter, r *http.Request) {
 	// authenticate
-	if !checkLogin(r) { do403(w, r); return }
+	if !checkLogin(r) {
+		do403(w, r)
+		return
+	}
 
 	// the JSON blob should have smallnote, bignote, favint, favfloat,
 	// and trickfloat... turn it into a map of interfaces
@@ -121,5 +150,9 @@ func handlePostData(w http.ResponseWriter, r *http.Request) {
 
 	// insert the data
 	ok := insertDataRow(m)
-	if ok { jResp(w, "{res: 'ok'}") } else { jResp(w, "{res: 'error'}") }
+	if ok {
+		jResp(w, "{res: 'ok'}")
+	} else {
+		jResp(w, "{res: 'error'}")
+	}
 }

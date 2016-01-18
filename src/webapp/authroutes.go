@@ -1,7 +1,11 @@
 // Routes related to OAuth, logging in, logging out, and registering
 package main
 
-import ("net/http"; "golang.org/x/oauth2"; "log")
+import (
+	"golang.org/x/oauth2"
+	"log"
+	"net/http"
+)
 
 // The route for '/login' starts the OAuth dance by redirecting to Google
 //
@@ -32,10 +36,10 @@ func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/app", http.StatusTemporaryRedirect)
 		return
 	}
-	
+
 	// we can't let the user in yet.  Set a flash cookie to explain, then send to '/'
 	name := "eflash" // i or e for info or error
-	val  := ""
+	val := ""
 	if res == registerOk {
 		name = "iflash"
 		val = "Registration succeeded.  Please wait for an administrator to confirm your account."

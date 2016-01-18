@@ -9,7 +9,11 @@
 // http://localhost:8080
 package main
 
-import ("net/http"; "flag"; "fmt")
+import (
+	"flag"
+	"fmt"
+	"net/http"
+)
 
 func main() {
 
@@ -21,14 +25,14 @@ func main() {
 		"The folder from which to serve requests")
 
 	flag.Parse()
-	
+
 	// print our configuration
 	fmt.Println("Serving " + *folder + " on port " + *port)
-	
+
 	// On any request, we add the folder prefix and then attempt to serve
 	// the file that results.  Note that this approach will display
 	// folders, too.
-	http.HandleFunc("/", func (res http.ResponseWriter, req *http.Request) {
+	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		http.ServeFile(res, req, *folder+req.URL.Path)
 	})
 	http.ListenAndServe(":"+*port, nil)

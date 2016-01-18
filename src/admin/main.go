@@ -9,8 +9,17 @@
 // arbitrary one-off operations on the database
 package main
 
-import ("encoding/csv"; "flag"; "io"; "os"; "database/sql"; "encoding/json"
-	_ "github.com/go-sql-driver/mysql"; "log"; "fmt")
+import (
+	"database/sql"
+	"encoding/csv"
+	"encoding/json"
+	"flag"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
+	"io"
+	"log"
+	"os"
+)
 
 // Configuration information for Google OAuth, MySQL, and Memcached.  We
 // parse this from a JSON config file
@@ -41,10 +50,14 @@ var cfg Config
 // the JSON contents into the cfg variable
 func loadConfig(cfgFileName string) {
 	f, err := os.Open(cfgFileName)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer f.Close()
 	jsonParser := json.NewDecoder(f)
-	if err = jsonParser.Decode(&cfg); err != nil { log.Fatal(err) }
+	if err = jsonParser.Decode(&cfg); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Create the database that will be used by our program.  The database name
@@ -54,10 +67,14 @@ func createDatabase() {
 	// specifying any database
 	db, err := sql.Open("mysql",
 		cfg.DbUser+":"+cfg.DbPass+"@("+cfg.DbHost+":"+cfg.DbPort+")/")
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
-	_, err = db.Exec("CREATE DATABASE `"+cfg.DbName+"`;")
-	if err != nil { log.Fatal(err) }
+	_, err = db.Exec("CREATE DATABASE `" + cfg.DbName + "`;")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Delete the database that was being used by our program
@@ -65,10 +82,14 @@ func createDatabase() {
 func deleteDatabase() {
 	db, err := sql.Open("mysql",
 		cfg.DbUser+":"+cfg.DbPass+"@("+cfg.DbHost+":"+cfg.DbPort+")/")
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
-	_, err = db.Exec("DROP DATABASE `"+cfg.DbName+"`;")
-	if err != nil { log.Fatal(err) }
+	_, err = db.Exec("DROP DATABASE `" + cfg.DbName + "`;")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Connect to the database, and return the corresponding database object
@@ -76,10 +97,14 @@ func deleteDatabase() {
 // NB: will fail if the database hasn't been created
 func openDB() *sql.DB {
 	db, err := sql.Open("mysql", cfg.DbUser+":"+cfg.DbPass+"@tcp("+cfg.DbHost+":"+cfg.DbPort+")/"+cfg.DbName)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	// Ping the database to be sure it's live
 	err = db.Ping()
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	return db
 }
 
@@ -90,10 +115,14 @@ func openDB() *sql.DB {
 func resetUserTable(db *sql.DB) {
 	// drop the old users table
 	stmt, err := db.Prepare("DROP TABLE IF EXISTS users")
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer stmt.Close()
 	_, err = stmt.Exec()
-	if err != nil {log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// create the new users table
 	//
@@ -109,9 +138,13 @@ googleid varchar(100) not null,
 name     varchar(100) not null,
 email    varchar(100) not null
 )`)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	_, err = stmt.Exec()
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // drop and re-create the Data table.  The table name, field names, and field
@@ -122,10 +155,14 @@ email    varchar(100) not null
 func resetDataTable(db *sql.DB) {
 	// drop the old table
 	stmt, err := db.Prepare("DROP TABLE IF EXISTS data")
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer stmt.Close()
 	_, err = stmt.Exec()
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// create the new objectives table
 	stmt, err = db.Prepare(`CREATE TABLE data (
@@ -135,9 +172,13 @@ bignote   text not null,
 favint    int not null,
 favfloat  float not null,
 trickfloat float)`)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	_, err = stmt.Exec()
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Parse a CSV so that each line becomes an array of strings, and then use
@@ -150,7 +191,9 @@ trickfloat float)`)
 func loadCsv(csvname *string, db *sql.DB) {
 	// load the csv file
 	file, err := os.Open(*csvname)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer file.Close()
 
 	// create the prepared statement for inserting into the database
@@ -160,8 +203,10 @@ func loadCsv(csvname *string, db *sql.DB) {
 	// column.  That's not an objectively better approach, but for this
 	// example, it results in less code.
 	stmt, err := db.Prepare("INSERT INTO data(smallnote, bignote, favint, favfloat, trickfloat) VALUES(?, ?, ?, ?, ?)")
-	if err != nil { log.Fatal(err) }
-	
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// parse the csv, one record at a time
 	reader := csv.NewReader(file)
 	reader.Comma = ','
@@ -169,18 +214,26 @@ func loadCsv(csvname *string, db *sql.DB) {
 	for {
 		// get next row... exit on EOF
 		row, err := reader.Read()
-		if err == io.EOF { break } else if err != nil { log.Fatal(err) }
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Fatal(err)
+		}
 		// We have an array of strings, representing the data.  We
 		// can dump it into the database by matching array indices
 		// with parameters to the INSERT statement.  The only tricky
 		// part is that our last column can be null, so we need a way
 		// to handle null values, which are '""' in the CSV
 		var lastcol *string = nil
-		if row[4] != "" { lastcol = &row[4] }
+		if row[4] != "" {
+			lastcol = &row[4]
+		}
 		// NB: no need for casts... the MySQL driver will figure out
 		//     the types
 		_, err = stmt.Exec(row[0], row[1], row[2], row[3], lastcol)
-		if err != nil { log.Fatal(err) }
+		if err != nil {
+			log.Fatal(err)
+		}
 		count++
 	}
 	log.Println("Added", count, "rows")
@@ -192,23 +245,35 @@ func loadCsv(csvname *string, db *sql.DB) {
 func listNewAccounts(db *sql.DB) {
 	// get all inactive rows from the database
 	rows, err := db.Query("SELECT * FROM users WHERE state = ?", 0)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer rows.Close()
 	// scan into these vars, which get reused on each loop iteration
-	var (id int; state int; googleid string; name string; email string)
+	var (
+		id       int
+		state    int
+		googleid string
+		name     string
+		email    string
+	)
 	// print a header
 	fmt.Println("New Users:")
 	fmt.Println("[id googleid name email]")
 	// print the rows
 	for rows.Next() {
 		err = rows.Scan(&id, &state, &googleid, &name, &email)
-		if err != nil { log.Fatal(err) }
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Println(id, googleid, name, email)
 	}
 	// On error, rows.Next() returns false... but we still need to check
 	// for errors
 	err = rows.Err()
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Since this is an administrative interface, we don't need to do anything
@@ -217,7 +282,9 @@ func listNewAccounts(db *sql.DB) {
 // where the account is already activated
 func activateAccount(db *sql.DB, id int) {
 	_, err := db.Exec("UPDATE users SET state = 1 WHERE id = ?", id)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // We occasionally need to do one-off queries that can't really be predicted
@@ -225,8 +292,10 @@ func activateAccount(db *sql.DB, id int) {
 // recompile, and then run with the "oneoff" flag to do the corresponding
 // action.  For now, it's hard coded to delete userid=1 from the Users table
 func doOneOff(db *sql.DB) {
-	_, err := db.Exec("DELETE FROM users WHERE id = ?", 1) 
-	if err != nil { log.Fatal(err) }
+	_, err := db.Exec("DELETE FROM users WHERE id = ?", 1)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Main routine: Use the command line options to determine what action to
@@ -242,7 +311,7 @@ func main() {
 	opDeleteDb := flag.Bool("deleteschema", false, "Delete the entire MySQL database?")
 	opResetUserTable := flag.Bool("resetuserstable", false, "Delete and re-create the users table?")
 	opResetDataTable := flag.Bool("resetdatatable", false, "Delete and re-create the data table?")
-	opCsv   := flag.Bool("loadcsv", false, "Load a csv into the data table?")
+	opCsv := flag.Bool("loadcsv", false, "Load a csv into the data table?")
 	opListNewReg := flag.Bool("listnewusers", false, "List new registrations?")
 	opRegister := flag.Int("activatenewuser", -1, "Complete pending registration for a user")
 	opOneOff := flag.Bool("oneoff", false, "Run a one-off query")
@@ -252,18 +321,36 @@ func main() {
 	loadConfig(*configPath)
 
 	// if we are creating or deleting a database, do the op and return
-	if *opCreateDb { createDatabase(); return }
-	if *opDeleteDb { deleteDatabase(); return }
+	if *opCreateDb {
+		createDatabase()
+		return
+	}
+	if *opDeleteDb {
+		deleteDatabase()
+		return
+	}
 
 	// open the database
 	db := openDB()
 	defer db.Close()
 
 	// all other ops are handled below:
-	if *opResetUserTable { resetUserTable(db) }
-	if *opResetDataTable { resetDataTable(db) }
-	if *opCsv { loadCsv(csvName, db) }
-	if *opListNewReg { listNewAccounts(db) }
-	if *opRegister != -1 { activateAccount(db, * opRegister) }
-	if *opOneOff { doOneOff(db) }
+	if *opResetUserTable {
+		resetUserTable(db)
+	}
+	if *opResetDataTable {
+		resetDataTable(db)
+	}
+	if *opCsv {
+		loadCsv(csvName, db)
+	}
+	if *opListNewReg {
+		listNewAccounts(db)
+	}
+	if *opRegister != -1 {
+		activateAccount(db, *opRegister)
+	}
+	if *opOneOff {
+		doOneOff(db)
+	}
 }

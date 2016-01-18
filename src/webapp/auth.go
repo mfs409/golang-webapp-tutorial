@@ -1,18 +1,28 @@
 // Functions and objects that are used in order to authenticate the user
 package main
 
-import ("net/http"; "crypto/rand"; "encoding/base64"; "io"; "time"; "log";
-	"golang.org/x/oauth2"; "io/ioutil"; "encoding/json"; "sync")
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
+	"golang.org/x/oauth2"
+	"io"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+)
 
 // create an "enum" for dealing with responses from a login request
 const (
-	registerOk = iota       // registration success
-	registerErr = iota      // unspecified registration error
-	registerExist = iota    // register a registered user
-	loginOk = iota          // login success
-	loginErr = iota         // unspecified login error
-	loginNotReg = iota      // log in of unregistered user
-	loginNotActive = iota   // log in of unactivated registered user
+	registerOk     = iota // registration success
+	registerErr    = iota // unspecified registration error
+	registerExist  = iota // register a registered user
+	loginOk        = iota // login success
+	loginErr       = iota // unspecified login error
+	loginNotReg    = iota // log in of unregistered user
+	loginNotActive = iota // log in of unactivated registered user
 )
 
 // When the user logs in, we get the Google User ID, Email, and Name.
@@ -37,20 +47,24 @@ const (
 // re-log in.  The only way to avoid that is to persist this map to some
 // location that is global across nodes, and we're not going to do that in
 // this simple example.
-var cookieStore = struct{
+var cookieStore = struct {
 	sync.RWMutex
 	m map[string]string
 }{m: make(map[string]string)}
 
 // Check if a request is being made from an authenticated context
-func checkLogin(r *http.Request) (bool) {
+func checkLogin(r *http.Request) bool {
 	// grab the "id" cookie, fail if it doesn't exist
 	cookie, err := r.Cookie("id")
-	if err == http.ErrNoCookie { return false }
+	if err == http.ErrNoCookie {
+		return false
+	}
 
 	// grab the "key" cookie, fail if it doesn't exist
 	key, err := r.Cookie("key")
-	if err == http.ErrNoCookie { return false }
+	if err == http.ErrNoCookie {
+		return false
+	}
 
 	// make sure we've got the right stuff in the hash
 	cookieStore.RLock()
@@ -60,9 +74,11 @@ func checkLogin(r *http.Request) (bool) {
 
 // Generate 256 bits of randomness
 func sessionId() string {
-    b := make([]byte, 32)
-    if _, err := io.ReadFull(rand.Reader, b); err != nil { return "" }
-    return base64.URLEncoding.EncodeToString(b)
+	b := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		return ""
+	}
+	return base64.URLEncoding.EncodeToString(b)
 }
 
 // To in order to log the user out, we need to remove the corresponding
@@ -82,7 +98,7 @@ func processLogoutRequest(w http.ResponseWriter, r *http.Request) {
 		flash := http.Cookie{Name: "iflash", Value: "Logout successful", Path: "/"}
 		http.SetCookie(w, &flash)
 	}
-	
+
 	// clear the cookies on the client
 	clearID := http.Cookie{Name: "id", Value: "-1", Expires: time.Now(), Path: "/"}
 	http.SetCookie(w, &clearID)
@@ -107,18 +123,20 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 	// register attempt.  First character of the 'state' string is 'r'
 	// for register, 'l' for login.
 	errorCode := loginErr
-	if (state[:1] == "r") { errorCode = registerErr }
+	if state[:1] == "r" {
+		errorCode = registerErr
+	}
 
 	// validate state... it needs to match the secret we sent
 	if state[1:] != oauthStateString {
-		log.Println("state didn't match", oauthStateString);
+		log.Println("state didn't match", oauthStateString)
 		return errorCode
 	}
 
 	// convert the authorization code into a token
 	token, err := oauthConf.Exchange(oauth2.NoContext, code)
 	if err != nil {
-		log.Println("token exchange error", code);
+		log.Println("token exchange error", code)
 		return errorCode
 	}
 
@@ -160,7 +178,7 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 	}
 	if u == nil {
 		// no user... let's hope this is a registration request
-		if (state[:1] != "r") {
+		if state[:1] != "r" {
 			log.Println("Attempt to log in an unregistered user")
 			return loginNotReg
 		}
@@ -173,7 +191,7 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 		return registerOk
 	} else {
 		// we have a user... let's hope this is a login request
-		if (state [:1] == "r") {
+		if state[:1] == "r" {
 			log.Println("Attempt to register an existing user")
 			return registerExist
 		}

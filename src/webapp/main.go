@@ -2,7 +2,11 @@
 // MySQL from Go.
 package main
 
-import ("log"; "net/http"; "flag")
+import (
+	"flag"
+	"log"
+	"net/http"
+)
 
 // main function configures resources and launches the app
 func main() {
@@ -12,13 +16,13 @@ func main() {
 
 	// load the JSON config file
 	loadConfig(*configPath)
-	
+
 	// open the database
 	openDB()
 
 	// set up templates
 	buildTemplates()
-	
+
 	// set up the routes... it's good to have these all in one place,
 	// since we need to be cautious about orders when there is a common
 	// prefix
@@ -35,7 +39,7 @@ func main() {
 	router.Register("/logout", "GET", handleLogout)
 	router.Register("/login", "GET", handleGoogleLogin)
 	// Static files
-	router.Register("/public/", "GET", handlePublicFile) // NB: regexp
+	router.Register("/public/", "GET", handlePublicFile)   // NB: regexp
 	router.Register("/private/", "GET", handlePrivateFile) // NB: regexp
 	// The logged-in main page
 	router.Register("/app", "GET", handleApp)

@@ -5,13 +5,16 @@
 // use Regexps to match routes.
 package main
 
-import("regexp"; "net/http")
+import (
+	"net/http"
+	"regexp"
+)
 
 // each route consists of a pattern, the HTTP verb, and a function to run
 type route struct {
-	rxp *regexp.Regexp   // the regexp describing the route
-	verb string          // the verb
-	handler http.Handler // the handler
+	rxp     *regexp.Regexp // the regexp describing the route
+	verb    string         // the verb
+	handler http.Handler   // the handler
 }
 
 // The router's data is just an array of routes
@@ -21,10 +24,10 @@ type Router struct {
 
 // extend Router with a function to register a new Route
 func (this *Router) Register(regex string, verb string,
-	                     handler func(http.ResponseWriter, *http.Request)) {
+	handler func(http.ResponseWriter, *http.Request)) {
 	// NB: compile the regexp before saving it
 	this.routes = append(this.routes, &route{regexp.MustCompile(regex), verb,
-		             http.HandlerFunc(handler)})
+		http.HandlerFunc(handler)})
 }
 
 // Handle a request by forwarding to the appropriate route

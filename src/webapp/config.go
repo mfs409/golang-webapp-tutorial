@@ -2,8 +2,13 @@
 // interacting with config information that is stored in a JSON file.
 package main
 
-import ("golang.org/x/oauth2"; "golang.org/x/oauth2/google"; "os"; "log";
-	"encoding/json")
+import (
+	"encoding/json"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"log"
+	"os"
+)
 
 // Information regarding the Google OAuth provider... most of this can't be
 // set until we load the JSON file
@@ -55,10 +60,14 @@ var cfg Config
 func loadConfig(cfgFileName string) {
 	// first, load the JSON file and parse it into /cfg/
 	f, err := os.Open(cfgFileName)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer f.Close()
 	jsonParser := json.NewDecoder(f)
-	if err = jsonParser.Decode(&cfg); err != nil { log.Fatal(err) }
+	if err = jsonParser.Decode(&cfg); err != nil {
+		log.Fatal(err)
+	}
 
 	// second, update our OAuth stuff
 	oauthConf.ClientID = cfg.ClientId

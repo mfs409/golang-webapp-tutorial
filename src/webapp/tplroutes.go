@@ -1,7 +1,12 @@
 // Routes for serving content that is generated from templates
 package main
 
-import("net/http"; "html/template"; "log"; "time")
+import (
+	"html/template"
+	"log"
+	"net/http"
+	"time"
+)
 
 // The template for generating the main page (the '/' route)
 var mainPage *template.Template
@@ -10,11 +15,11 @@ var mainPage *template.Template
 var appPage *template.Template
 
 // Flash structs are used to send a message, via a cookie, back to the
-// browser when we redirect home on login/logout/registration events.  
+// browser when we redirect home on login/logout/registration events.
 type Flash struct {
-	Inf bool // true if there's an info message
+	Inf     bool   // true if there's an info message
 	InfText string // info message to print
-	Err bool // true if there's an error message
+	Err     bool   // true if there's an error message
 	ErrText string // error message to print
 }
 
@@ -22,9 +27,13 @@ type Flash struct {
 func buildTemplates() {
 	var err error
 	mainPage, err = template.ParseFiles("templates/main.tpl")
-	if err != nil { log.Fatal("main template parse error", err) }
+	if err != nil {
+		log.Fatal("main template parse error", err)
+	}
 	appPage, err = template.ParseFiles("templates/app.tpl")
-	if err != nil { log.Fatal("app template parse error", err) }
+	if err != nil {
+		log.Fatal("app template parse error", err)
+	}
 }
 
 // The route for '/' checks for flash cookies (i == Info; e == Error) and
@@ -56,6 +65,9 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 // The route for '/app' ensures the user is logged in, and then renders the
 // app page via a template
 func handleApp(w http.ResponseWriter, r *http.Request) {
-	if !checkLogin(r) { do403(w, r); return }
+	if !checkLogin(r) {
+		do403(w, r)
+		return
+	}
 	appPage.Execute(w, nil)
 }
