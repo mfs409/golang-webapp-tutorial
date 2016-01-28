@@ -1,0 +1,15 @@
+{
+    "OauthGoogleClientId"     : "",
+    "OauthGoogleClientSecret" : "",
+    "OauthGoogleScopes"       : ["https://www.googleapis.com/auth/userinfo.email"],
+    "OauthGoogleRedirectUrl"  : "http://localhost:8080/auth/google/callback",
+
+    "MongoHost"     : "",
+    "MongoPort"     : "27017",
+    "MongoDbname"   : "",
+
+    "MemcachedHost" : "",
+    "MemcachedPort" : "11211",
+
+    "AppPort" : "8080"
+}

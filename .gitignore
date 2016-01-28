@@ -4,4 +4,5 @@ webapp_config.json
 */src/golang.org/*
 */src/google.golang.org/*
 */src/github.com/*
+*/src/gopkg.in/*
 myconfig.json
