@@ -2,114 +2,84 @@
 package main
 
 import (
-	"database/sql"
-	"encoding/json"
-	_ "github.com/go-sql-driver/mysql"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+	"time"
+//	"encoding/json"
 	"log"
 )
 
-// prepared statements
-var selectRows *sql.Stmt // get all data rows
-var selectRow *sql.Stmt  // get one data row by ID
-var updateRow *sql.Stmt  // update one data row
-var insertRow *sql.Stmt  // insert one row in data table
-var deleteRow *sql.Stmt  // delete one row from data table
-var selectUser *sql.Stmt // get one user
-var insertUser *sql.Stmt // add one user
-
 // the database connection
-var db *sql.DB
+var db *mgo.Database
 
 // a user row from the database looks like this:
 type User struct {
-	id       int
-	state    int
-	googleid string
-	name     string
-	email    string
+	ID       bson.ObjectId `bson:"_id"`
+	State    int           `bson:"state"`
+	Googleid string        `bson:"googleid"`
+	Name     string        `bson:"name"`
+	Email    string        `bson:"email"`
+	Create   time.Time     `bson:"create"`
 }
 
 // open the database
 func openDB() {
-	// assumes we've run 'CREATE SCHEMA `cfg.MysqlDbname` ;'
-	db, err := sql.Open("mysql",
-		cfg.DbUser+":"+cfg.DbPass+"@("+cfg.DbHost+":"+cfg.DbPort+")/"+cfg.DbName)
+	var err error
+	log.Println("opening database " + cfg.DbHost)
+	m, err := mgo.Dial(cfg.DbHost)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = db.Ping() // ensure alive...
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// create prepared statements for getting and creating users
-	selectUser, err = db.Prepare("SELECT * FROM users WHERE googleid = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
-	insertUser, err = db.Prepare("INSERT INTO users(state, googleid, name, email) VALUES (?, ?, ?, ?)")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// create prepared statements for REST routes on the 'data' table
-	selectRows, err = db.Prepare("SELECT * FROM data")
-	if err != nil {
-		log.Fatal(err)
-	}
-	selectRow, err = db.Prepare("SELECT * FROM data WHERE id = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
-	updateRow, err = db.Prepare("UPDATE data SET smallnote = ?, bignote = ?, favint = ?, favfloat = ?, trickfloat = ? WHERE id = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
-	insertRow, err = db.Prepare("INSERT INTO data(smallnote, bignote, favint, favfloat, trickfloat) VALUES(?, ?, ?, ?, ?)")
-	if err != nil {
-		log.Fatal(err)
-	}
-	deleteRow, err = db.Prepare("DELETE FROM data WHERE id = ?")
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Println("database open")
+	db = m.DB(cfg.DbName)
 }
 
 // get a user's record, to make login/register decisions
 func getUserById(googleId string) (*User, error) {
-	// should never fail if DB is reachable:
-	rows, err := selectUser.Query(googleId)
+	u := User{}
+	err := db.C("users").Find(bson.M{"googleid" : googleId}).Select(nil).One(&u)
+	// NB: Findone returns an error on not found, so we need to
+	//     disambiguate between DB errors and not-found errors
 	if err != nil {
-		log.Println("query error", err)
+		if err.Error() == "not found" {
+			return nil, nil
+		}
+		log.Println("Error querying users", err)
 		return nil, err
 	}
-	defer rows.Close()
-	if !rows.Next() {
-		return nil, nil
-	} // no record exists
-
-	// copy row into 'user' and return it
-	var user User
-	err = rows.Scan(&user.id, &user.state, &user.googleid, &user.name, &user.email)
-	if err != nil {
-		log.Println("scan error", err)
-		return nil, err
-	}
-	return &user, nil
+	// TODO: verify that we get good data sometimes
+	return &u, nil
 }
 
 // insert a row into the user table
 func addNewUser(id string, name string, email string, state int) error {
+	u := User{
+		ID:bson.NewObjectId(),
+		State: state,
+		Googleid: id,
+		Name: name,
+		Email: email,
+		Create: time.Now(),
+	}
+	err := db.C("users").Insert(u)
+	if err != nil {
+		log.Println(err)
+	}
+	return err
+	/*
+TODO
 	_, err := insertUser.Exec(state, id, name, email)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
-	return nil
+*/
 }
 
 // get all rows from DATA, return them as JSON
 func getAllRows() string {
+	/*
+TODO
 	// get all the data, return an empty blob on failure
 	rows, err := selectRows.Query()
 	if err != nil {
@@ -175,6 +145,8 @@ func getAllRows() string {
 		return "error"
 	}
 	return string(jsonData)
+*/
+	return ""
 }
 
 // get one row from DATA, return it as JSON
@@ -182,6 +154,8 @@ func getAllRows() string {
 // NB: for better or worse, we're doing this in the same way as getRows(), so
 // we'll skip commenting the redundant code
 func getRow(id int) string {
+	return ""
+	/* TODO
 	// get all the data, return an empty blob on failure
 	rows, err := selectRow.Query(id)
 	if err != nil {
@@ -226,10 +200,13 @@ func getRow(id int) string {
 		return "internal error"
 	}
 	return string(jsonData)
+*/
 }
 
 // Update a row in DATA
 func updateDataRow(id int, data map[string]interface{}) bool {
+	return false;
+	/* TODO
 	// special case for trickfloat
 	var special *string = nil
 	tf := data["trickfloat"].(string)
@@ -243,20 +220,26 @@ func updateDataRow(id int, data map[string]interface{}) bool {
 		return false
 	}
 	return true
+*/
 }
 
 // Delete a row from DATA
 func deleteDataRow(id int) bool {
+	return false
+	/*
 	_, err := deleteRow.Exec(id)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
 	return true
+*/
 }
 
 // Insert a row into DATA
 func insertDataRow(data map[string]interface{}) bool {
+	return false
+	/*
 	// special case for trickfloat
 	var special *string = nil
 	tf := data["trickfloat"].(string)
@@ -270,4 +253,5 @@ func insertDataRow(data map[string]interface{}) bool {
 		return false
 	}
 	return true
+*/
 }

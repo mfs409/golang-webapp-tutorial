@@ -42,11 +42,9 @@ type Config struct {
 	ClientSecret string   `json:"OauthGoogleClientSecret"`
 	Scopes       []string `json:"OauthGoogleScopes"`
 	RedirectUrl  string   `json:"OauthGoogleRedirectUrl"`
-	DbUser       string   `json:"MysqlUsername"`
-	DbPass       string   `json:"MysqlPassword"`
-	DbHost       string   `json:"MysqlHost"`
-	DbPort       string   `json:"MysqlPort"`
-	DbName       string   `json:"MysqlDbname"`
+	DbHost       string   `json:"MongoHost"`
+	DbPort       string   `json:"MongoPort"`
+	DbName       string   `json:"MongoDbname"`
 	McdHost      string   `json:"MemcachedHost"`
 	McdPort      string   `json:"MemcachedPort"`
 	AppPort      string   `json:"AppPort"`

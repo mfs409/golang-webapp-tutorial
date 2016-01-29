@@ -196,7 +196,7 @@ func processLoginReply(w http.ResponseWriter, r *http.Request) int {
 			return registerExist
 		}
 		// is the user allowed to log in?
-		if u.state == 0 {
+		if u.State == 0 {
 			log.Println("Attempt to log in unactivated account")
 			return loginNotActive
 		}

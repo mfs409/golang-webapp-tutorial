@@ -16,7 +16,7 @@ import (
 	"encoding/json"
 	"time"
 	"flag"
-//	"fmt"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -141,18 +141,18 @@ func resetDb() {
 // Connect to the database, and return the corresponding database object
 //
 // NB: will fail if the database hasn't been created
-func openDB() *mgo.Session {
+func openDB() *mgo.Database {
 	// Connect or fail
-	db, err := mgo.Dial(cfg.DbHost)
+	s, err := mgo.Dial(cfg.DbHost)
 	if err != nil { log.Fatal(err) }
-	return db
+	return s.DB(cfg.DbName)
 }
 
 // Parse a CSV so that each line becomes an array of strings, and then use
 // the array of strings to push a row to the data table
 //
 // NB: This is hard-coded for our "data" table.
-func loadCsv(csvname *string, db *mgo.Session) {
+func loadCsv(csvname *string, db *mgo.Database) {
 	// load the csv file
 	file, err := os.Open(*csvname)
 	if err != nil {
@@ -161,7 +161,7 @@ func loadCsv(csvname *string, db *mgo.Session) {
 	defer file.Close()
 
 	// get the right collection from the database
-	d := db.DB(cfg.DbName).C("data")
+	d := db.C("data")
 	
 	// parse the csv, one record at a time
 	reader := csv.NewReader(file)
@@ -205,43 +205,21 @@ func loadCsv(csvname *string, db *mgo.Session) {
 	log.Println("Added", count, "rows")
 }
 
-/*
-// TODO: we can't implement this until user registration is working
-
 // When a user registers, the new account is not active until the
 // administrator activates it.  This function lists registrations that are
 // not yet activated
-func listNewAccounts(db *sql.DB) {
+func listNewAccounts(db *mgo.Database) {
 	// get all inactive rows from the database
-	rows, err := db.Query("SELECT * FROM users WHERE state = ?", 0)
+	var results []UserEntry
+	err := db.C("users").Find(bson.M{"state":0}).Sort("create").All(&results)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer rows.Close()
-	// scan into these vars, which get reused on each loop iteration
-	var (
-		id       int
-		state    int
-		googleid string
-		name     string
-		email    string
-	)
 	// print a header
 	fmt.Println("New Users:")
 	fmt.Println("[id googleid name email]")
-	// print the rows
-	for rows.Next() {
-		err = rows.Scan(&id, &state, &googleid, &name, &email)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Println(id, googleid, name, email)
-	}
-	// On error, rows.Next() returns false... but we still need to check
-	// for errors
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
+	for i, v := range results {
+		fmt.Println("[",i,"]", v.ID, v.Googleid, v.Name, v.Email)
 	}
 }
 
@@ -249,13 +227,19 @@ func listNewAccounts(db *sql.DB) {
 // too fancy for the account activation: the flags include the ID to update,
 // we just use it to update the database, and we don't worry about the case
 // where the account is already activated
-func activateAccount(db *sql.DB, id int) {
+func activateAccount(db *mgo.Database, id string) {
+	q := bson.M{"_id" : bson.ObjectIdHex(id)}
+	change := bson.M{"$set" : bson.M{"state" : 1}}
+	err := db.C("users").Update(q, change)
+	if err != nil { log.Fatal(err) }
+
+	/*
 	_, err := db.Exec("UPDATE users SET state = 1 WHERE id = ?", id)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
 */
+}
 
 /*
 // We occasionally need to do one-off queries that can't really be predicted
@@ -281,8 +265,8 @@ func main() {
 	csvName := flag.String("csvfile", "data.csv", "The csv file to parse")
 	opResetDb := flag.Bool("resetdb", false, "Reset the Mongo database?")
 	opCsv := flag.Bool("loadcsv", false, "Load a csv into the data table?")
-//	opListNewReg := flag.Bool("listnewusers", false, "List new registrations?")
-//	opRegister := flag.Int("activatenewuser", -1, "Complete pending registration for a user")
+	opListNewReg := flag.Bool("listnewusers", false, "List new registrations?")
+	opRegister := flag.String("activatenewuser", "", "Complete pending registration for a user")
 //	opOneOff := flag.Bool("oneoff", false, "Run a one-off query")
 	flag.Parse()
 
@@ -297,18 +281,17 @@ func main() {
 	
 	// open the database
 	db := openDB()
-	defer db.Close()
 
 	// all other ops are handled below:
 	if *opCsv {
 		loadCsv(csvName, db)
 	}
-	// if *opListNewReg {
-	// 	listNewAccounts(db)
-	// }
-	// if *opRegister != -1 {
-	// 	activateAccount(db, *opRegister)
-	// }
+	if *opListNewReg {
+	 	listNewAccounts(db)
+	}
+	if *opRegister != "" {
+		activateAccount(db, *opRegister)
+	}
 	/*
 	if *opOneOff {
 		doOneOff(db)

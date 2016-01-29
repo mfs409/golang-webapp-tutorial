@@ -25,7 +25,7 @@
    <div class="jumbotron">
     <h1>Example Web App</h1>
        <a class="btn btn-default" href="/logout">
-        <span class="glyphicon glyphicon-log-out"> Log-Out</span>
+        <span class="glyphicon glyphicon-log-out"></span> Log-Out
        </a>
    </div>
 

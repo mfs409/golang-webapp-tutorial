@@ -47,7 +47,7 @@
         to register your ID with our system.
        </p>
        <a class="btn btn-default" href="/register">
-        <span class="glyphicon glyphicon-user"> Register</span>
+        <span class="glyphicon glyphicon-user"></span> Register
        </a>
       </div>
      </div>
@@ -63,7 +63,7 @@
         using your Google ID.
        </p>
        <a class="btn btn-default" href="/login">
-        <span class="glyphicon glyphicon-log-in"> Log-In</span>
+        <span class="glyphicon glyphicon-log-in"></span> Log-In
        </a>
       </div>
      </div>
