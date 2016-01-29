@@ -57,10 +57,12 @@ $(document).on("click", ".edit-btn", function() {
             id : $('#id').val()+"",
             smallnote : $('#smallnote').val()+"",
             bignote : $('#bignote').val()+"",
-            favint : $('#favint').val()+"",
-            favfloat : $('#favfloat').val()+"",
-            trickfloat : $('#trickfloat').val()+"",
+            favint : parseInt($('#favint').val()),
+            favfloat : parseFloat($('#favfloat').val()),
+            trickfloat : parseFloat( $('#trickfloat').val()),
         }
+        if ($('#trickfloat').val() + "" !== "")
+            newdata.trickfloat = parseFloat( $('#trickfloat').val());
         $.ajax({
             type: "PUT",
             url: "/data/"+newdata.id,
@@ -117,10 +119,12 @@ $(document).on("click", ".add-btn", function() {
         var newdata = {
             smallnote : $('#smallnote').val()+"",
             bignote : $('#bignote').val()+"",
-            favint : $('#favint').val()+"",
-            favfloat : $('#favfloat').val()+"",
-            trickfloat : $('#trickfloat').val()+"",
+            favint : parseInt($('#favint').val()),
+            favfloat : parseFloat($('#favfloat').val()),
+            trickfloat : parseFloat( $('#trickfloat').val()),
         }
+        if ($('#trickfloat').val() + "" !== "")
+            newdata.trickfloat = parseFloat( $('#trickfloat').val());
         $.ajax({
             type: "POST",
             url: "/data",
