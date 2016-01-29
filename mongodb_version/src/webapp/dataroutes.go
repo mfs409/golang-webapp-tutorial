@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 // a helper function to send HTTP 403 / Forbidden when the user is not logged
@@ -47,14 +46,9 @@ func handlePutData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the ID from the querystring
-	id, err := strconv.Atoi(r.URL.Path[6:])
-	if err != nil {
-		jResp(w, "invalid id: "+r.URL.Path+" "+r.URL.Path[6:])
-		return
-	}
+	id := r.URL.Path[6:]
 
-	// the JSON blob should have smallnote, bignote, favint, favfloat,
-	// and trickfloat... read into a map of interfaces
+	// Get the JSON blob as raw bytes, then marshal into a DataRow
 	defer r.Body.Close()
 	contents, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -62,17 +56,16 @@ func handlePutData(w http.ResponseWriter, r *http.Request) {
 		jResp(w, "error")
 		return
 	}
-	var f interface{}
-	err = json.Unmarshal([]byte(string(contents)), &f)
+	var d DataRow
+	err = json.Unmarshal(contents, &d)
 	if err != nil {
-		log.Println("Error unmarshaling JSON reply")
+		log.Println("Error unmarshaling JSON reply", err)
 		jResp(w, "error")
 		return
 	}
-	m := f.(map[string]interface{})
 
 	// send the new data to the database
-	ok := updateDataRow(id, m)
+	ok := updateDataRow(id, d)
 	if ok {
 		jResp(w, "{res: 'ok'}")
 	} else {
@@ -89,11 +82,7 @@ func handleGetDataOne(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the ID from the querystring
-	id, err := strconv.Atoi(r.URL.Path[6:])
-	if err != nil {
-		jResp(w, "invalid id: "+r.URL.Path+" "+r.URL.Path[6:])
-		return
-	}
+	id := r.URL.Path[6:]
 
 	// get a big JSON blob via getRow, send it back
 	w.Write([]byte(getRow(id)))
@@ -107,11 +96,8 @@ func handleDeleteData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := strconv.Atoi(r.URL.Path[6:])
-	if err != nil {
-		jResp(w, "invalid id: "+r.URL.Path+" "+r.URL.Path[6:])
-		return
-	}
+	// get the ID from the querystring
+	id :=r.URL.Path[6:]
 
 	// delete the row
 	ok := deleteDataRow(id)
@@ -130,8 +116,7 @@ func handlePostData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// the JSON blob should have smallnote, bignote, favint, favfloat,
-	// and trickfloat... turn it into a map of interfaces
+	// Get the JSON blob as raw bytes, then marshal into a DataRow
 	defer r.Body.Close()
 	contents, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -139,17 +124,16 @@ func handlePostData(w http.ResponseWriter, r *http.Request) {
 		jResp(w, "error")
 		return
 	}
-	var f interface{}
-	err = json.Unmarshal([]byte(string(contents)), &f)
+	var d DataRow
+	err = json.Unmarshal(contents, &d)
 	if err != nil {
-		log.Println("Error unmarshaling JSON reply")
+		log.Println("Error unmarshaling JSON reply", err)
 		jResp(w, "error")
 		return
 	}
-	m := f.(map[string]interface{})
 
 	// insert the data
-	ok := insertDataRow(m)
+	ok := insertDataRow(d)
 	if ok {
 		jResp(w, "{res: 'ok'}")
 	} else {

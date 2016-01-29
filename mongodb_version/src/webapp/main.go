@@ -19,6 +19,7 @@ func main() {
 
 	// open the database
 	openDB()
+	defer closeDB()
 
 	// set up templates
 	buildTemplates()
@@ -28,9 +29,9 @@ func main() {
 	// prefix
 	router := new(Router)
 	// REST routes for the DATA table
-	router.Register("/data/[0-9]+$", "PUT", handlePutData)
-	router.Register("/data/[0-9]+$", "GET", handleGetDataOne)
-	router.Register("/data/[0-9]+$", "DELETE", handleDeleteData)
+	router.Register("/data/[0-9a-z]+$", "PUT", handlePutData)
+	router.Register("/data/[0-9a-z]+$", "GET", handleGetDataOne)
+	router.Register("/data/[0-9a-z]+$", "DELETE", handleDeleteData)
 	router.Register("/data$", "POST", handlePostData)
 	router.Register("/data$", "GET", handleGetAllData)
 	// OAuth and login/out routes

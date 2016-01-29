@@ -57,9 +57,6 @@ type UserEntry struct {
 }
 
 // The type for data in the "data" table
-//
-// TODO: for TrickFloat, will pointer type with null value enable empty val
-//       in mgo?
 type DataEntry struct {
 	ID         bson.ObjectId `bson:"_id"`
 	SmallNote  string        `bson:"smallnote"`
@@ -232,27 +229,15 @@ func activateAccount(db *mgo.Database, id string) {
 	change := bson.M{"$set" : bson.M{"state" : 1}}
 	err := db.C("users").Update(q, change)
 	if err != nil { log.Fatal(err) }
-
-	/*
-	_, err := db.Exec("UPDATE users SET state = 1 WHERE id = ?", id)
-	if err != nil {
-		log.Fatal(err)
-	}
-*/
 }
 
-/*
 // We occasionally need to do one-off queries that can't really be predicted
 // ahead of time.  When that time comes, we can edit this function,
 // recompile, and then run with the "oneoff" flag to do the corresponding
 // action.  For now, it's hard coded to delete userid=1 from the Users table
-func doOneOff(db *sql.DB) {
-	_, err := db.Exec("DELETE FROM users WHERE id = ?", 1)
-	if err != nil {
-		log.Fatal(err)
-	}
+func doOneOff(db *mgo.Database) {
+	// TODO: do something in here!
 }
-*/
 
 // Main routine: Use the command line options to determine what action to
 // take, then forward to the appropriate function.  Since this program is for
@@ -267,7 +252,7 @@ func main() {
 	opCsv := flag.Bool("loadcsv", false, "Load a csv into the data table?")
 	opListNewReg := flag.Bool("listnewusers", false, "List new registrations?")
 	opRegister := flag.String("activatenewuser", "", "Complete pending registration for a user")
-//	opOneOff := flag.Bool("oneoff", false, "Run a one-off query")
+	opOneOff := flag.Bool("oneoff", false, "Run a one-off query")
 	flag.Parse()
 
 	// load the JSON config file
@@ -292,9 +277,7 @@ func main() {
 	if *opRegister != "" {
 		activateAccount(db, *opRegister)
 	}
-	/*
 	if *opOneOff {
 		doOneOff(db)
 	}
-*/
 }

@@ -5,7 +5,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"time"
-//	"encoding/json"
+	"encoding/json"
 	"log"
 )
 
@@ -22,6 +22,17 @@ type User struct {
 	Create   time.Time     `bson:"create"`
 }
 
+// The type for data in the "data" table
+type DataRow struct {
+	ID         bson.ObjectId `bson:"_id" json:"id"`
+	SmallNote  string        `bson:"smallnote" json:"smallnote"`
+	BigNote    string        `bson:"bignote" json:"bignote"`
+	FavInt     int           `bson:"favint" json:"favint"`
+	FavFloat   float64       `bson:"favfloat" json:"favfloat"`
+	TrickFloat *float64      `bson:"trickfloat" json:"trickfloat"`
+	Create     time.Time     `bson:"create"`
+}
+
 // open the database
 func openDB() {
 	var err error
@@ -32,6 +43,13 @@ func openDB() {
 	}
 	log.Println("database open")
 	db = m.DB(cfg.DbName)
+}
+
+// close the database
+// We can defer this from the main app
+func closeDB() {
+	log.Println("closing database")
+	db.Session.Close()
 }
 
 // get a user's record, to make login/register decisions
@@ -47,7 +65,6 @@ func getUserById(googleId string) (*User, error) {
 		log.Println("Error querying users", err)
 		return nil, err
 	}
-	// TODO: verify that we get good data sometimes
 	return &u, nil
 }
 
@@ -66,192 +83,77 @@ func addNewUser(id string, name string, email string, state int) error {
 		log.Println(err)
 	}
 	return err
-	/*
-TODO
-	_, err := insertUser.Exec(state, id, name, email)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-*/
 }
 
 // get all rows from DATA, return them as JSON
 func getAllRows() string {
-	/*
-TODO
-	// get all the data, return an empty blob on failure
-	rows, err := selectRows.Query()
+	var results []DataRow
+	err := db.C("data").Find(nil).Sort("create").All(&results)
 	if err != nil {
-		return ""
+		log.Fatal(err)
 	}
-	defer rows.Close()
-
-	// get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return "error"
-	}
-
-	// we ultimately want to marshal an array into a JSON string, because
-	// order matters
-	allData := make([]map[string]interface{}, 0)
-
-	// When we parse a row, we need a pointer for where each column goes.
-	// To save some pain, we'll have an array to hold the rows, and
-	// another array of pointers to those array entries.  That way, we
-	// can scan to ptrs, and then use values
-	//
-	// NB: '6' is a magic number, representing the number of columns
-	bytestreams := make([]interface{}, 6)
-	ptrs := make([]interface{}, 6)
-	for i := 0; i < 6; i++ {
-		ptrs[i] = &bytestreams[i]
-	}
-
-	// parse the rows, copy them into the array as string:string maps
-	for rows.Next() {
-		// get data into bytestreams as a bunch of byte streams
-		err = rows.Scan(ptrs...)
-		if err != nil {
-			return "error"
-		}
-
-		// we're going to shuffle it into here
-		rowAsMap := make(map[string]interface{})
-
-		// for each column, create a string from the byte stream,
-		// match it with its column name, and put it all in rowAsMap
-		for i, bytes := range bytestreams {
-			// if the row type isn't text, we can have trouble,
-			// but this seems to work for ints (not sure about floats)
-			var v interface{}
-			b, ok := bytes.([]byte)
-			if ok {
-				v = string(b)
-			} else {
-				v = bytes
-			}
-			rowAsMap[columns[i]] = v
-		}
-
-		// send the parsed row into the table
-		allData = append(allData, rowAsMap)
-	}
-
+	
 	// marshall as JSON, then return it as a string
-	jsonData, err := json.Marshal(allData)
+	jsonData, err := json.Marshal(results)
 	if err != nil {
 		return "error"
 	}
 	return string(jsonData)
-*/
-	return ""
 }
 
 // get one row from DATA, return it as JSON
 //
 // NB: for better or worse, we're doing this in the same way as getRows(), so
 // we'll skip commenting the redundant code
-func getRow(id int) string {
-	return ""
-	/* TODO
-	// get all the data, return an empty blob on failure
-	rows, err := selectRow.Query(id)
-	if err != nil {
-		return "internal error"
-	}
-	defer rows.Close()
+func getRow(id string) string {
 
-	// get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		return "internal error"
-	}
 
-	// parse the data... note the magic number 6 again...
-	rows.Next()
-	bytestreams := make([]interface{}, 6)
-	ptrs := make([]interface{}, 6)
-	for i := 0; i < 6; i++ {
-		ptrs[i] = &bytestreams[i]
-	}
-
-	// get data into bytestreams as a bunch of byte streams
-	err = rows.Scan(ptrs...)
+	d := DataRow{}
+	err := db.C("users").Find(bson.M{"_id" : bson.ObjectIdHex(id)}).Select(nil).One(&d)
+	// NB: Findone returns an error on not found, so we need to
+	//     disambiguate between DB errors and not-found errors
 	if err != nil {
-		return "not found"
-	}
-	rowAsMap := make(map[string]interface{})
-	for i, bytes := range bytestreams {
-		var v interface{}
-		b, ok := bytes.([]byte)
-		if ok {
-			v = string(b)
-		} else {
-			v = bytes
+		if err.Error() == "not found" {
+			return "not found"
 		}
-		rowAsMap[columns[i]] = v
+		log.Println("Error querying users", err)
+		return "internal error"
 	}
 
-	// marshall as JSON, then return it as a string
-	jsonData, err := json.Marshal(rowAsMap)
+	jsonData, err := json.Marshal(d)
 	if err != nil {
 		return "internal error"
 	}
 	return string(jsonData)
-*/
 }
 
 // Update a row in DATA
-func updateDataRow(id int, data map[string]interface{}) bool {
-	return false;
-	/* TODO
-	// special case for trickfloat
-	var special *string = nil
-	tf := data["trickfloat"].(string)
-	if tf != "" {
-		special = &tf
+func updateDataRow(id string, data DataRow) bool {
+	q := bson.M{"_id" : bson.ObjectIdHex(id)}
+	fields := bson.M{"smallnote" : data.SmallNote,
+		"bignote" : data.BigNote,"favint" : data.FavInt,
+		"favfloat" : data.FavFloat, "trickfloat" : nil}
+	if data.TrickFloat != nil {
+		fields["trickfloat"] = data.TrickFloat
 	}
-	// do the update
-	_, err := updateRow.Exec(data["smallnote"], data["bignote"], data["favint"], data["favfloat"], special, id)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-	return true
-*/
+	change := bson.M{"$set" : fields}
+	err := db.C("data").Update(q, change)
+	if err != nil { log.Println(err); return false }
+	return true;
 }
 
 // Delete a row from DATA
-func deleteDataRow(id int) bool {
-	return false
-	/*
-	_, err := deleteRow.Exec(id)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
+func deleteDataRow(id string) bool {
+	q := bson.M{"_id" : bson.ObjectIdHex(id)}
+	err := db.C("data").Remove(q)
+	if err != nil { log.Println(err); return false }
 	return true
-*/
 }
 
 // Insert a row into DATA
-func insertDataRow(data map[string]interface{}) bool {
-	return false
-	/*
-	// special case for trickfloat
-	var special *string = nil
-	tf := data["trickfloat"].(string)
-	if tf != "" {
-		special = &tf
-	}
-	// do the insert
-	_, err := insertRow.Exec(data["smallnote"], data["bignote"], data["favint"], data["favfloat"], special)
-	if err != nil {
-		log.Println(err)
-		return false
-	}
+func insertDataRow(data DataRow) bool {
+	data.ID = bson.NewObjectId()
+	err := db.C("data").Insert(data)
+	if err != nil { log.Println(err); return false }
 	return true
-*/
 }
