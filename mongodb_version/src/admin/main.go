@@ -10,17 +10,17 @@
 package main
 
 import (
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"encoding/csv"
 	"encoding/json"
-	"time"
 	"flag"
 	"fmt"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"io"
 	"log"
 	"os"
 	"strconv"
+	"time"
 )
 
 // Configuration information for Google OAuth, MySQL, and Memcached.  We
@@ -30,6 +30,9 @@ import (
 //
 // NB: between the field names and JSON mnemonics, it should be easy to
 //     figure out what each field does
+//
+// NB: to keep things simple, we're omitting the memory cache in this
+//     tutorial
 type Config struct {
 	ClientId     string   `json:"OauthGoogleClientId"`
 	ClientSecret string   `json:"OauthGoogleClientSecret"`
@@ -89,15 +92,19 @@ func loadConfig(cfgFileName string) {
 func resetDb() {
 	// Connect or fail
 	db, err := mgo.Dial(cfg.DbHost)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer db.Close()
 
 	// We'll use monotonic mode for now...
 	db.SetMode(mgo.Monotonic, true)
-	
+
 	// drop the database
 	err = db.DB(cfg.DbName).DropDatabase()
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// create the database by putting the collections into it
 	//
@@ -107,32 +114,40 @@ func resetDb() {
 	id := bson.NewObjectId()
 	err = u.Insert(
 		&UserEntry{
-			ID : id,
-			State: 0,
+			ID:       id,
+			State:    0,
 			Googleid: "",
-			Name: "",
-			Email: "",
-			Create: time.Now()})
-	if err != nil { log.Fatal(err) }
-	q := bson.M{"_id" : id }
+			Name:     "",
+			Email:    "",
+			Create:   time.Now()})
+	if err != nil {
+		log.Fatal(err)
+	}
+	q := bson.M{"_id": id}
 	err = u.Remove(q)
-	if err != nil { log.Fatal(err) }
-	
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	d := db.DB(cfg.DbName).C("data")
 	id = bson.NewObjectId()
 	err = d.Insert(
 		&DataEntry{
-			ID: id,
-			SmallNote: "",
-			BigNote: "",
-			FavInt: 72,
-			FavFloat: 2.23,
+			ID:         id,
+			SmallNote:  "",
+			BigNote:    "",
+			FavInt:     72,
+			FavFloat:   2.23,
 			TrickFloat: nil,
-			Create: time.Now()})
-	if err != nil { log.Fatal(err) }
+			Create:     time.Now()})
+	if err != nil {
+		log.Fatal(err)
+	}
 	q = bson.M{"_id": id}
 	err = d.Remove(q)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Connect to the database, and return the corresponding database object
@@ -141,7 +156,9 @@ func resetDb() {
 func openDB() *mgo.Database {
 	// Connect or fail
 	s, err := mgo.Dial(cfg.DbHost)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 	return s.DB(cfg.DbName)
 }
 
@@ -159,7 +176,7 @@ func loadCsv(csvname *string, db *mgo.Database) {
 
 	// get the right collection from the database
 	d := db.C("data")
-	
+
 	// parse the csv, one record at a time
 	reader := csv.NewReader(file)
 	reader.Comma = ','
@@ -176,27 +193,33 @@ func loadCsv(csvname *string, db *mgo.Database) {
 		// need to move it into a DataEntry struct, then we can send
 		// it to mgo.  Be careful about nulls!
 		fi, err := strconv.Atoi(row[2])
-		if err != nil { log.Fatal(err) }
+		if err != nil {
+			log.Fatal(err)
+		}
 		ff, err := strconv.ParseFloat(row[3], 64)
-		
+
 		var trick *float64 = nil
 		if row[4] != "" {
 			tf, err := strconv.ParseFloat(row[4], 64)
-			if err != nil { log.Fatal(err) }
+			if err != nil {
+				log.Fatal(err)
+			}
 			trick = &tf
 		}
 		// Create the id for this record
 		id := bson.NewObjectId()
 		err = d.Insert(
 			&DataEntry{
-				ID: id,
-				SmallNote: row[0],
-				BigNote: row[1],
-				FavInt: fi,
-				FavFloat: ff,
+				ID:         id,
+				SmallNote:  row[0],
+				BigNote:    row[1],
+				FavInt:     fi,
+				FavFloat:   ff,
 				TrickFloat: trick,
-				Create: time.Now()})
-		if err != nil { log.Fatal(err) }
+				Create:     time.Now()})
+		if err != nil {
+			log.Fatal(err)
+		}
 		count++
 	}
 	log.Println("Added", count, "rows")
@@ -208,7 +231,7 @@ func loadCsv(csvname *string, db *mgo.Database) {
 func listNewAccounts(db *mgo.Database) {
 	// get all inactive rows from the database
 	var results []UserEntry
-	err := db.C("users").Find(bson.M{"state":0}).Sort("create").All(&results)
+	err := db.C("users").Find(bson.M{"state": 0}).Sort("create").All(&results)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -216,7 +239,7 @@ func listNewAccounts(db *mgo.Database) {
 	fmt.Println("New Users:")
 	fmt.Println("[id googleid name email]")
 	for i, v := range results {
-		fmt.Println("[",i,"]", v.ID, v.Googleid, v.Name, v.Email)
+		fmt.Println("[", i, "]", v.ID, v.Googleid, v.Name, v.Email)
 	}
 }
 
@@ -225,16 +248,18 @@ func listNewAccounts(db *mgo.Database) {
 // we just use it to update the database, and we don't worry about the case
 // where the account is already activated
 func activateAccount(db *mgo.Database, id string) {
-	q := bson.M{"_id" : bson.ObjectIdHex(id)}
-	change := bson.M{"$set" : bson.M{"state" : 1}}
+	q := bson.M{"_id": bson.ObjectIdHex(id)}
+	change := bson.M{"$set": bson.M{"state": 1}}
 	err := db.C("users").Update(q, change)
-	if err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // We occasionally need to do one-off queries that can't really be predicted
 // ahead of time.  When that time comes, we can edit this function,
 // recompile, and then run with the "oneoff" flag to do the corresponding
-// action.  For now, it's hard coded to delete userid=1 from the Users table
+// action.  For now, it's a no-op.
 func doOneOff(db *mgo.Database) {
 	// TODO: do something in here!
 }
@@ -263,7 +288,7 @@ func main() {
 		resetDb()
 		return
 	}
-	
+
 	// open the database
 	db := openDB()
 
@@ -272,7 +297,7 @@ func main() {
 		loadCsv(csvName, db)
 	}
 	if *opListNewReg {
-	 	listNewAccounts(db)
+		listNewAccounts(db)
 	}
 	if *opRegister != "" {
 		activateAccount(db, *opRegister)

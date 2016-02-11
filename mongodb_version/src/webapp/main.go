@@ -1,5 +1,5 @@
 // A demo web application to show how to use OAuth 2.0 (Google+ Provider) and
-// MySQL from Go.
+// MongoDB from Go.
 package main
 
 import (
@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-// main function configures resources and launches the app
+// The main function just configures resources and starts listening for new
+// web requests
 func main() {
 	// parse command line options
 	configPath := flag.String("configfile", "config.json", "Path to the configuration (JSON) file")

@@ -14,7 +14,7 @@ var mainPage *template.Template
 // The template for generating the logged in page (the '/app' route)
 var appPage *template.Template
 
-// Flash structs are used to send a message, via a cookie, back to the
+// We use these Flash structs to send a message, via a cookie, back to the
 // browser when we redirect home on login/logout/registration events.
 type Flash struct {
 	Inf     bool   // true if there's an info message
@@ -23,7 +23,7 @@ type Flash struct {
 	ErrText string // error message to print
 }
 
-// We call this in order to initialize all templates when we start the app
+// We call this in order to initialize the templates when we start the app
 func buildTemplates() {
 	var err error
 	mainPage, err = template.ParseFiles("templates/main.tpl")

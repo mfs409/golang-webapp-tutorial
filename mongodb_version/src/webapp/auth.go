@@ -1,4 +1,5 @@
-// Functions and objects that are used in order to authenticate the user
+// This file contains functions and objects that are used in order to
+// authenticate the user
 package main
 
 import (
@@ -31,10 +32,10 @@ const (
 // in a cookie on the client browser, so that subsequent requests can prove
 // their identity.
 //
-// The problem is that anyone who knows the ID can spoof the user.  To
-// secure, we don't just save the ID, we also save a token that we randomly
-// generate upon login.  If the ID and Token match, then we trust you to be
-// who you say you are.
+// The problem is that anyone who knows the ID can spoof the user.  To be
+// more secure, we don't just save the ID, we also save a token that we
+// randomly generate upon login.  If the ID and Token match, then we trust
+// you to be who you say you are.
 //
 // Note that an attacker can still assume your identity if it can access your
 // cookies, but it can't assume your identity just by knowing your ID

@@ -1,4 +1,5 @@
-// Routes for handling file requests
+// Routes for handling file requests.  This corresponds to a static file
+// server, with public and private subfolders.
 package main
 
 import (

@@ -3,6 +3,7 @@ package main
 
 import (
 	"encoding/json"
+	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,7 +27,7 @@ func jResp(w http.ResponseWriter, data interface{}) {
 	w.Write([]byte(string(payload)))
 }
 
-// The GET route for all rows of DATA
+// The GET route for all rows of the data table
 func handleGetAllData(w http.ResponseWriter, r *http.Request) {
 	// if authentication passes, use getAllRows to get a big JSON blob to
 	// send back
@@ -34,10 +35,10 @@ func handleGetAllData(w http.ResponseWriter, r *http.Request) {
 		do403(w, r)
 		return
 	}
-	w.Write([]byte(getAllRows()))
+	w.Write(getAllRows())
 }
 
-// The PUT route for updating a row of DATA
+// The PUT route for updating a row of the data table
 func handlePutData(w http.ResponseWriter, r *http.Request) {
 	// check authentication
 	if !checkLogin(r) {
@@ -46,9 +47,9 @@ func handlePutData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the ID from the querystring
-	id := r.URL.Path[6:]
+	id := bson.ObjectIdHex(r.URL.Path[6:])
 
-	// Get the JSON blob as raw bytes, then marshal into a DataRow
+	// Get the user's JSON blob as raw bytes, then marshal into a DataRow
 	defer r.Body.Close()
 	contents, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -73,7 +74,7 @@ func handlePutData(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// The GET route for viewing one row of DATA
+// The GET route for viewing one row of the data table
 func handleGetDataOne(w http.ResponseWriter, r *http.Request) {
 	// check authentication
 	if !checkLogin(r) {
@@ -82,13 +83,13 @@ func handleGetDataOne(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the ID from the querystring
-	id := r.URL.Path[6:]
+	id := bson.ObjectIdHex(r.URL.Path[6:])
 
-	// get a big JSON blob via getRow, send it back
-	w.Write([]byte(getRow(id)))
+	// get a big JSON blob from the database via getRow, send it back
+	w.Write(getRow(id))
 }
 
-// The DELETE route for removing one row of DATA
+// The DELETE route for removing one row from the data table
 func handleDeleteData(w http.ResponseWriter, r *http.Request) {
 	// authenticate, then get ID from querystring
 	if !checkLogin(r) {
@@ -97,7 +98,7 @@ func handleDeleteData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get the ID from the querystring
-	id :=r.URL.Path[6:]
+	id := bson.ObjectIdHex(r.URL.Path[6:])
 
 	// delete the row
 	ok := deleteDataRow(id)
@@ -108,7 +109,7 @@ func handleDeleteData(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// The POST route for adding a new row of DATA
+// The POST route for adding a new row to the data table
 func handlePostData(w http.ResponseWriter, r *http.Request) {
 	// authenticate
 	if !checkLogin(r) {
@@ -116,7 +117,7 @@ func handlePostData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the JSON blob as raw bytes, then marshal into a DataRow
+	// Get the user's JSON blob as raw bytes, then marshal into a DataRow
 	defer r.Body.Close()
 	contents, err := ioutil.ReadAll(r.Body)
 	if err != nil {

@@ -1,12 +1,15 @@
-// All code for direct interaction with the database is in this file
+// The purpose of this file is to put all of the interaction with MongoDB in
+// one place.  This lets us change backends without having to modify other
+// parts of the code, and it also makes it easier to see how the program
+// interacts with data, since it's all in one place.
 package main
 
 import (
+	"encoding/json"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
-	"encoding/json"
 	"log"
+	"time"
 )
 
 // the database connection
@@ -22,7 +25,10 @@ type User struct {
 	Create   time.Time     `bson:"create"`
 }
 
-// The type for data in the "data" table
+// a data row from the database looks like this
+//
+// NB: BSON and JSON tags are provided, so that Go will auto-marshall to/from
+//     BSON and JSON as needed
 type DataRow struct {
 	ID         bson.ObjectId `bson:"_id" json:"id"`
 	SmallNote  string        `bson:"smallnote" json:"smallnote"`
@@ -46,7 +52,7 @@ func openDB() {
 }
 
 // close the database
-// We can defer this from the main app
+// NB: We defer() this from main()
 func closeDB() {
 	log.Println("closing database")
 	db.Session.Close()
@@ -55,7 +61,7 @@ func closeDB() {
 // get a user's record, to make login/register decisions
 func getUserById(googleId string) (*User, error) {
 	u := User{}
-	err := db.C("users").Find(bson.M{"googleid" : googleId}).Select(nil).One(&u)
+	err := db.C("users").Find(bson.M{"googleid": googleId}).Select(nil).One(&u)
 	// NB: Findone returns an error on not found, so we need to
 	//     disambiguate between DB errors and not-found errors
 	if err != nil {
@@ -69,14 +75,14 @@ func getUserById(googleId string) (*User, error) {
 }
 
 // insert a row into the user table
-func addNewUser(id string, name string, email string, state int) error {
+func addNewUser(googleid string, name string, email string, state int) error {
 	u := User{
-		ID:bson.NewObjectId(),
-		State: state,
-		Googleid: id,
-		Name: name,
-		Email: email,
-		Create: time.Now(),
+		ID:       bson.NewObjectId(),
+		State:    state,
+		Googleid: googleid,
+		Name:     name,
+		Email:    email,
+		Create:   time.Now(),
 	}
 	err := db.C("users").Insert(u)
 	if err != nil {
@@ -85,75 +91,80 @@ func addNewUser(id string, name string, email string, state int) error {
 	return err
 }
 
-// get all rows from DATA, return them as JSON
-func getAllRows() string {
+// get all rows from the data table, return them as JSON
+func getAllRows() []byte {
+	// query into an array of DataRow objects
 	var results []DataRow
 	err := db.C("data").Find(nil).Sort("create").All(&results)
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	// marshall as JSON, then return it as a string
+
+	// marshall as JSON, which will produce a byte stream
 	jsonData, err := json.Marshal(results)
 	if err != nil {
-		return "error"
+		return []byte("error")
 	}
-	return string(jsonData)
+	return jsonData
 }
 
-// get one row from DATA, return it as JSON
-//
-// NB: for better or worse, we're doing this in the same way as getRows(), so
-// we'll skip commenting the redundant code
-func getRow(id string) string {
-
-
+// get one row from the data table, return it as JSON
+func getRow(id bson.ObjectId) []byte {
 	d := DataRow{}
-	err := db.C("users").Find(bson.M{"_id" : bson.ObjectIdHex(id)}).Select(nil).One(&d)
+	err := db.C("users").Find(bson.M{"_id": id}).Select(nil).One(&d)
 	// NB: Findone returns an error on not found, so we need to
 	//     disambiguate between DB errors and not-found errors
 	if err != nil {
 		if err.Error() == "not found" {
-			return "not found"
+			return []byte("not found")
 		}
 		log.Println("Error querying users", err)
-		return "internal error"
+		return []byte("internal error")
 	}
 
 	jsonData, err := json.Marshal(d)
 	if err != nil {
-		return "internal error"
+		return []byte("internal error")
 	}
-	return string(jsonData)
+	return jsonData
 }
 
-// Update a row in DATA
-func updateDataRow(id string, data DataRow) bool {
-	q := bson.M{"_id" : bson.ObjectIdHex(id)}
-	fields := bson.M{"smallnote" : data.SmallNote,
-		"bignote" : data.BigNote,"favint" : data.FavInt,
-		"favfloat" : data.FavFloat, "trickfloat" : nil}
+// Update a row in the data table
+func updateDataRow(id bson.ObjectId, data DataRow) bool {
+	q := bson.M{"_id": id}
+	fields := bson.M{"smallnote": data.SmallNote,
+		"bignote": data.BigNote, "favint": data.FavInt,
+		"favfloat": data.FavFloat, "trickfloat": nil}
 	if data.TrickFloat != nil {
 		fields["trickfloat"] = data.TrickFloat
 	}
-	change := bson.M{"$set" : fields}
+	change := bson.M{"$set": fields}
 	err := db.C("data").Update(q, change)
-	if err != nil { log.Println(err); return false }
-	return true;
-}
-
-// Delete a row from DATA
-func deleteDataRow(id string) bool {
-	q := bson.M{"_id" : bson.ObjectIdHex(id)}
-	err := db.C("data").Remove(q)
-	if err != nil { log.Println(err); return false }
+	if err != nil {
+		log.Println(err)
+		return false
+	}
 	return true
 }
 
-// Insert a row into DATA
+// Delete a row from the data table
+func deleteDataRow(id bson.ObjectId) bool {
+	q := bson.M{"_id": id}
+	err := db.C("data").Remove(q)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+
+// Insert a row into the data table
 func insertDataRow(data DataRow) bool {
 	data.ID = bson.NewObjectId()
 	err := db.C("data").Insert(data)
-	if err != nil { log.Println(err); return false }
+	if err != nil {
+		log.Println(err)
+		return false
+	}
 	return true
 }

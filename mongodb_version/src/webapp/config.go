@@ -67,7 +67,7 @@ func loadConfig(cfgFileName string) {
 		log.Fatal(err)
 	}
 
-	// second, update our OAuth stuff
+	// second, update our OAuth configuration object
 	oauthConf.ClientID = cfg.ClientId
 	oauthConf.ClientSecret = cfg.ClientSecret
 	oauthConf.Scopes = cfg.Scopes

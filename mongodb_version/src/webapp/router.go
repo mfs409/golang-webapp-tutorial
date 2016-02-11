@@ -1,8 +1,6 @@
-// Set up an HTTP router that can manage REST requests correctly.
-//
-// We want to route as early as possible based on GET, PUT, POST, and DELETE
-// verbs, so we don't want to use the built-in go router.  This also lets use
-// use Regexps to match routes.
+// Set up an HTTP router that can manage REST requests a little more cleanly.
+// In particular, we want to route as early as possible based on
+// GET/PUT/POST/DELETE verbs, and we want to use regexps to match routes.
 package main
 
 import (
