@@ -48,6 +48,8 @@ Bash for Windows".  Assuming that is the case, here are the steps for getting
 started.  We'll check out the code to a folder on the desktop, build
 everything and get it running.
 
+#### Get the code, configure it
+
 1. Open Git Bash
 2. Navigate to your desktop, check out the code, and move to the code directory:
 
@@ -56,11 +58,11 @@ everything and get it running.
     cd golang-webapp-tutorial
 
 3. Set up a Google OAuth project in the Google Developer Console
-- Be sure to enable the Google+ API
-- Set up credentials for a web client
-- For now, when developing locally, use http://localhost:8080/auth/google/callback as your Redirect URL
-- Don't forget to configure your OAuth consent screen
-- Make note of your Client ID and your Client Secret
+    - Be sure to enable the Google+ API
+    - Set up credentials for a web client
+    - For now, when developing locally, use http://localhost:8080/auth/google/callback as your Redirect URL
+    - Don't forget to configure your OAuth consent screen
+    - Make note of your Client ID and your Client Secret
 
 4. Set up a file with your configuration information
 
@@ -81,7 +83,7 @@ Developer Console.  For now, also set up your MongoDB information like this:
     "MongoPort"     : "27017",
     "MongoDbname"   : "webapp",
 
-5. Start your database
+#### Start your database
 
 I assume that you installed MongoDB in the "normal" way.  If you did, then to
 start your database, first start a second Git Bash for Windows prompt, and
@@ -103,7 +105,7 @@ spaces in the names of the folders you are using.  I typically put this
 single line in a shell script for convenience.  Alternatively, you could add
 the MongoDB "bin" folder to your PATH.)
 
-6. Now it's time to build some code
+#### Build the code
 
 The Go language expects you to have your build environment configured in a
 certain way.  If you've used Go before, you're familiar with the idea of
@@ -132,7 +134,7 @@ server:
     go get golang.org/x/oauth2/google
     go build webapp
 
-7. Running the code
+#### Run the code
 
 Our code has an administrative component, and a main server.  You might want
 to have two windows open for this part.
